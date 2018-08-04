@@ -4,10 +4,13 @@ import PhoneInput from 'react-native-phone-input';
 import Styles from './Styles'
 import {loginUser} from "../../Config/Firebase";
 import MapScreen from "../MapScreen/Map";
+import { connect } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import {onLogin} from '../../redux/auth/action'
 
 const {height, width} = Dimensions.get('window')
 
-export default class LoginScreen extends Component{
+class LoginScreen extends Component{
     static navigationOptions = {
         header : null
     };
@@ -30,10 +33,11 @@ export default class LoginScreen extends Component{
            if(!this.state.sendCode){
                Alert.alert('', "First create an account ")
            }
-       },10000);
+       },5000);
        let user = await loginUser(phoneNo);
        if(user){
-            this.setState({sendCode: true, confirmResult: user});
+           this.props.onLogin(phoneNo);
+           this.setState({sendCode: true, confirmResult: user});
             Alert.alert('','Code send successfully')
        }
     }
@@ -111,3 +115,19 @@ export default class LoginScreen extends Component{
         )
     }
 }
+
+const mapStateToProps = (state) => {
+    return {
+        user: state.auth.user,
+    };
+};
+const mapDispatchToProps = (dispatch) => {
+    return bindActionCreators({
+        onLogin: onLogin
+    }, dispatch)
+};
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(LoginScreen)

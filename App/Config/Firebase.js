@@ -12,7 +12,7 @@ const loginUser = (phoneNo) => {
                         })
                 }
                 else{
-                    let msg = "please first signup"
+                    let msg = "please first create an account"
                     reject(msg)
                 }
             })

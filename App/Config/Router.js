@@ -8,8 +8,9 @@ const {width, height} = Dimensions.get('window');
 
 const Route = createStackNavigator({
     LoginScreen: {screen: LoginScreen},
-    SignUp: {screen: SignUp},
     MapScreen: { screen: MapScreen},
+    SignUp: {screen: SignUp},
+
 }, {
     headerMode: 'none'
 });
