@@ -1,5 +1,5 @@
 import React,{Component} from 'react';
-import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert} from 'react-native';
+import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator} from 'react-native';
 import PhoneInput from 'react-native-phone-input';
 import Styles from './Styles'
 import {loginUser} from "../../Config/Firebase";
@@ -22,22 +22,25 @@ class LoginScreen extends Component{
             sendCode: false,
             codeInput: '',
             confirmResult:null,
+            loginLoader: false
         }
         this.login = this.login.bind(this);
         this.confirmCode = this.confirmCode.bind(this);
     }
 
    async login(){
-        const {phoneNo} = this.state;
+        const {phoneNo, loginLoader} = this.state;
+        this.setState({loginLoader: true})
        setTimeout(()=>{
            if(!this.state.sendCode){
                Alert.alert('', "First create an account ")
+               this.setState({loginLoader: false, phoneNo: '' })
            }
-       },5000);
+       },10000);
        let user = await loginUser(phoneNo);
        if(user){
            this.props.onLogin(phoneNo);
-           this.setState({sendCode: true, confirmResult: user});
+           this.setState({sendCode: true, confirmResult: user, loginLoader: false, phoneNo: ''});
             Alert.alert('','Code send successfully')
        }
     }
@@ -90,6 +93,7 @@ class LoginScreen extends Component{
                                         this.phone = ref;
                                     }}
                                     initialCountry={'pk'}
+                                    value = {this.state.phoneNo}
                                     flagStyle={{width: 40, height: 30, borderWidth:0}}
                                     textStyle={{fontSize:20}}
                                     textProps={{placeholder: 'Telephone number'}}
@@ -99,8 +103,16 @@ class LoginScreen extends Component{
                         </View>
                         <TouchableOpacity onPress={()=> this.login()}>
                             <View style={{width:width*0.8, height: height*0.09, backgroundColor:'#7085a5',alignItems: 'center',justifyContent:'center', borderBottomLeftRadius:20, borderBottomRightRadius: 20}}>
-                                <Text style = {{fontSize:18, color:'#fff', fontFamily : 'monospace', fontWeight: 'bold'}}>Login</Text>
-                            </View>
+                                {this.state.loginLoader ?
+                                    <ActivityIndicator size="small" color="#0000ff"/> :
+                                    <Text style={{
+                                        fontSize: 18,
+                                        color: '#fff',
+                                        fontFamily: 'monospace',
+                                        fontWeight: 'bold'
+                                    }}>Login</Text>
+                                }
+                                    </View>
                         </TouchableOpacity>
                     </View>
 

@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-
+import {filterMechanic} from './../../Config/Firebase'
 const haversine = require('haversine')
 const {height, width} = Dimensions.get('window')
 
@@ -24,8 +24,31 @@ class MapScreen extends Component{
             distanceTravelled: 0,
             prevLatLng: {},
             locSet: false,
-            toggleInfo: false
+            toggleInfo: false,
+            markers: [{
+                title: 'hello',
+                coordinates: {
+                    latitude: 24.87566586,
+                    longitude: 67.34660916
+                },
+            },
+                {
+                    title: 'hello',
+                    coordinates: {
+                        latitude: 3.149771,
+                        longitude: 101.655449
+                    },
+                }]
         }
+
+        this.getMechanic = this.getMechanic.bind(this);
+    }
+
+    componentWillMount(){
+        this.getMechanic()
+    }
+    async getMechanic(){
+        const mechanic = await filterMechanic()
     }
 
     componentDidMount() {
@@ -60,10 +83,11 @@ class MapScreen extends Component{
     };
 
     render() {
+        console.log(this.state.user,'lllllllllaaaaaaaaaalllllll')
         return (
             <View style ={{height: height, width: width}}>
-                <Image style={{position: 'absolute', width: 20, height: 20}} source={require('./../../Images/profile.png')}/>
-                <View style={this.state.toggleInfo ? {height: height * 0.6, width: width}: {height: height, width: width}}>
+                <View style={{width: width, height: height* 0.08, backgroundColor: 'red'}}></View>
+                <View style={this.state.toggleInfo ? {height: height * 0.55, width: width}: {height: height, width: width}}>
                 {this.state.locSet ?
                 <MapView
                     style={styles.map}
@@ -77,15 +101,16 @@ class MapScreen extends Component{
                         longitudeDelta: 0.0121}}
                 >
                     <Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
-                   <Marker
-                       coordinate={{
-                            latitude: this.state.latitude,
-                            longitude: this.state.longitude}}
-                       title={"Home"}
-                       description={"Current Location"}
-                       image={require('./../../Images/pin.png')}
-                       onPress={()=> this.setState({toggleInfo: true})}
-                   />
+
+                    {this.state.markers.map(marker => (
+                        <MapView.Marker
+                            coordinate={marker.coordinates}
+                            title={marker.title}
+                            description={"Current Location"}
+                            image={require('./../../Images/pin.png')}
+                            onPress={()=> this.setState({toggleInfo: true})}
+                        />
+                    ))}
                 </MapView> :
                     <View style={{width: width, height: height, alignItems: 'center', justifyContent: 'center'}}>
                         <ActivityIndicator size="large" color="#0000ff" />
@@ -93,7 +118,7 @@ class MapScreen extends Component{
                 </View>
 
                 {this.state.toggleInfo ?
-                    <View style={{width: width, height: height * 0.37 ,backgroundColor:'red'}}>
+                    <View style={{width: width, height: height * 0.335 ,backgroundColor:'red'}}>
                         <View style={{width:width, height: height* 0.07, backgroundColor:'#7f8082', flexDirection: 'row'}}>
                             <View style={{width: width * 0.7, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
                                 <Text style={{color:'white', fontSize: 15}}>Reaching destination in 19 minutes!</Text>
@@ -127,8 +152,8 @@ class MapScreen extends Component{
                                 <Text style={{fontSize: 17, fontWeight: 'bold'}}>Motor Bike</Text>
                             </View>
                         </View>
-                        <View style={{width: width, height: height * 0.1, backgroundColor:'#10ba81'}}>
-                            <TouchableOpacity style={{width: width, height: height * 0.1, alignItems: 'center', justifyContent: 'center'}}>
+                        <View style={{width: width, height: height * 0.065, backgroundColor:'#10ba81'}}>
+                            <TouchableOpacity style={{width: width, height: height * 0.065, alignItems: 'center', justifyContent: 'center'}}>
                                 <Text style={{fontSize: 20}}> Request</Text>
                             </TouchableOpacity>
                         </View>

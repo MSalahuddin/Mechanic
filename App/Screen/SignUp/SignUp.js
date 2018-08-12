@@ -1,5 +1,5 @@
 import React,{Component} from 'react';
-import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ScrollView} from 'react-native';
+import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ScrollView, ActivityIndicator} from 'react-native';
 import PhoneInput from 'react-native-phone-input';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import firebase from 'react-native-firebase';
@@ -18,6 +18,7 @@ export default class SignUp extends Component{
 
     constructor(props){
         super(props);
+        this.unsubscribe = null;
         this.state = {
             firstName: '',
             lastName: '',
@@ -28,22 +29,28 @@ export default class SignUp extends Component{
             description: '',
             confirmResult:null,
             sendCode: false,
-            codeInput: ''
+            codeInput: '',
+            signupLoader: false
         }
         this.userSignUp = this.userSignUp.bind(this);
         this.confirmCode = this.confirmCode.bind(this);
     }
 
+    componentWillMount(){
+        firebase.auth().signOut();
+    }
    async userSignUp(){
-        const {firstName, lastName, email, phoneNo, password } = this.state;
+        const {firstName, lastName, email, phoneNo, password, signupLoader } = this.state;
+        this.setState({signupLoader: true})
         if(firstName === ''|| lastName === ''|| email === '' || password === '' || phoneNo === ''){
+            this.setState({signupLoader: false})
             alert('Fill all the fields')
         }
 
         else{
         let signupUser = await signUp(phoneNo)
             if(signupUser){
-                this.setState({sendCode: true,confirmResult: signupUser})
+                this.setState({sendCode: true,confirmResult: signupUser, signupLoader: false})
                 Alert.alert('','Code send successfully')
             }
         }
@@ -62,7 +69,7 @@ export default class SignUp extends Component{
                         phoneNo: phoneNo,
                         createdAt: Date.now(),
                         description: description,
-                        isMechanic: false,
+                        isMechanic: true,
                         id: user._user.uid
                     })
                         .then((docRef)=>{
@@ -193,7 +200,10 @@ export default class SignUp extends Component{
                             </View>
                             <TouchableOpacity onPress = {()=>this.userSignUp()}>
                                 <View style = {{width:width*0.8, height: height*0.09, backgroundColor:'#7085a5',alignItems: 'center',justifyContent:'center', borderBottomLeftRadius:20, borderBottomRightRadius: 20}}>
-                                    <Text style = {{fontSize:18, color:'#fff', fontFamily : 'monospace', fontWeight: 'bold'}}>SignUp</Text>
+                                    {this.state.signupLoader ?
+                                        <ActivityIndicator size="small" color="#0000ff"/> :
+                                        <Text style = {{fontSize:18, color:'#fff', fontFamily : 'monospace', fontWeight: 'bold'}}>SignUp</Text>
+                                    }
                                 </View>
                             </TouchableOpacity>
                         </View>

@@ -7,8 +7,8 @@ import SignUp from './../Screen/SignUp/SignUp'
 const {width, height} = Dimensions.get('window');
 
 const Route = createStackNavigator({
-    LoginScreen: {screen: LoginScreen},
     MapScreen: { screen: MapScreen},
+    LoginScreen: {screen: LoginScreen},
     SignUp: {screen: SignUp},
 
 }, {

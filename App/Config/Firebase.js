@@ -33,7 +33,27 @@ const signUp = (phoneNo) => {
     });
 }
 
+const filterMechanic = ()=>{
+    return new Promise((resolve, reject) =>{
+        db.collection('users').get()
+            .then(snapshot => {
+                let user = [];
+                snapshot.forEach(function(doc) {
+                    if (doc.exists) {
+                        if(doc.data().isMechanic){
+                            user.push(doc.data());
+                        }
+                    } else {
+                        reject(user)
+                    }
+                });
+                resolve(user);
+            })
+    })
+}
+
 export {
     loginUser,
-    signUp
+    signUp,
+    filterMechanic
 }
