@@ -1,5 +1,5 @@
 import firebase from 'react-native-firebase';
-const db = firebase.firestore()
+const db = firebase.firestore();
 
 const loginUser = (phoneNo) => {
     return new Promise((resolve, reject) => {
@@ -52,8 +52,21 @@ const filterMechanic = ()=>{
     })
 }
 
+const setDeviceToken = (userId, token)=>{
+    return new Promise((resolve, reject)=>{
+        db.collection('users').doc(userId).update({deviceToken: token})
+        .then((res)=>{
+            resolve(res);
+        })
+        .catch((err)=>{
+            reject(err)
+        })
+    })
+}
+
 export {
     loginUser,
     signUp,
-    filterMechanic
+    filterMechanic,
+    setDeviceToken
 }

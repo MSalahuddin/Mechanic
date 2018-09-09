@@ -6,19 +6,20 @@ export const LOGOUT = 'LOGOUT';
 
 const db = firebase.firestore()
 
-export const onLogin = (phoneNo) => {
+export const onLogin = (payload) => {
     return dispatch => {
-        db.collection("users").where("phoneNo", "==", phoneNo).get()
-            .then((res)=>{
-                let user = res._docs[0]._data
+        db.collection("users").doc(payload)
+            .onSnapshot((doc) => {
+                let user = doc.data();
+                let userId = {id: payload };
+                console.log("Current data: ", doc.data());
                 dispatch({
                     type: LOGIN,
-                    payload: {phoneNo, user}
+                    payload: {...userId, ...user}
                 });
-            })
-            .catch((err)=>{
-
-            })
+            }, (e) => {
+                console.log('Something Went Wrong from onLogin Redux');
+            });
     };
 
 };

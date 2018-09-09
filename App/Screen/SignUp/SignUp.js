@@ -61,7 +61,7 @@ export default class SignUp extends Component{
         if (confirmResult && codeInput.length) {
             confirmResult.confirm(codeInput)
                 .then((user) => {
-                    db.collection('users').add({
+                    db.collection('users').doc(user._user.uid).set({
                         firstName: firstName,
                         lastName: lastName,
                         email: email,
@@ -72,16 +72,13 @@ export default class SignUp extends Component{
                         isMechanic: true,
                         id: user._user.uid
                     })
-                        .then((docRef)=>{
+                        .then((res)=>{
                             Alert.alert('','Successfully registered')
                             this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
-                            console.log('Add data successfully', docRef.id)
                         })
                         .catch((error)=> {
                             console.log('Error Adding Data', error)
                         })
-                    console.log(user._user.uid,'user**********************')
-                    console.log(user._user.phoneNumber,'user**********************')
                 })
                 .catch(error => {
                     Alert.alert('','Error')

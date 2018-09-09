@@ -8,7 +8,9 @@ import {
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken} from './../../Config/Firebase'
+import firebase from 'react-native-firebase';
+import Styles from './Styles'
 const haversine = require('haversine')
 const {height, width} = Dimensions.get('window')
 
@@ -40,13 +42,29 @@ class MapScreen extends Component{
                     },
                 }]
         }
-
+        this.getDeviceToken = this.getDeviceToken.bind(this);
         this.getMechanic = this.getMechanic.bind(this);
     }
 
     componentWillMount(){
+        this.getDeviceToken()
         this.getMechanic()
     }
+
+    async setToken(token){
+        let userId = this.state.user.id
+        let res = await setDeviceToken(userId, token);
+        console.log(res,'iiiiiiiiiiiiiiiiiiiiiiiii')
+    }
+
+    async getDeviceToken(){
+        const FCM = firebase.messaging();
+        const fcmToken = FCM.getToken()
+            .then((token)=>{
+                this.setToken(token)
+            })
+    }
+
     async getMechanic(){
         const mechanic = await filterMechanic()
     }
@@ -83,11 +101,14 @@ class MapScreen extends Component{
     };
 
     render() {
-        console.log(this.state.user,'lllllllllaaaaaaaaaalllllll')
         return (
             <View style ={{height: height, width: width}}>
-                <View style={{width: width, height: height* 0.08, backgroundColor: 'red'}}></View>
-                <View style={this.state.toggleInfo ? {height: height * 0.55, width: width}: {height: height, width: width}}>
+                <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
+                    <TouchableOpacity style= {Styles.headerSubContent}  onPress={() => this.props.navigation.openDrawer()}>
+                        <Image source={require('./../../Images/menu.png')} style={Styles.menuImg}/>
+                    </TouchableOpacity>
+                </View>
+                <View style={this.state.toggleInfo ? {height: height * 0.55, width: width}: {height: height * 0.8, width: width}}>
                 {this.state.locSet ?
                 <MapView
                     style={styles.map}

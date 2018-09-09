@@ -39,7 +39,6 @@ class LoginScreen extends Component{
        },10000);
        let user = await loginUser(phoneNo);
        if(user){
-           this.props.onLogin(phoneNo);
            this.setState({sendCode: true, confirmResult: user, loginLoader: false, phoneNo: ''});
             Alert.alert('','Code send successfully')
        }
@@ -50,6 +49,7 @@ class LoginScreen extends Component{
         if (confirmResult && codeInput.length) {
             confirmResult.confirm(codeInput)
                 .then((user) => {
+                    this.props.onLogin(user._user.uid);
                     Alert.alert('', 'Code confirmed')
                     this.setState({codeInput: ''});
                     this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
@@ -118,7 +118,9 @@ class LoginScreen extends Component{
 
                     <View style={Styles.footer}>
                         <TouchableOpacity onPress={() => this.props.navigation.navigate("SignUp", {screen: "SignUp"})}>
-                            <Text style={Styles.footerText}>Don't you have an account! Signup</Text>
+                            <Text style={Styles.footerText}>
+                                Don't you have an account! Signup
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
