@@ -74,7 +74,7 @@ export default class SignUp extends Component{
                     })
                         .then((res)=>{
                             Alert.alert('','Successfully registered')
-                            this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+                            this.props.navigation.navigate("LoginScreen", {screen: "LoginScreen"})
                         })
                         .catch((error)=> {
                             console.log('Error Adding Data', error)

@@ -5,9 +5,12 @@ import MapScreen from './../Screen/MapScreen/Map'
 import LoginScreen from './../Screen/Login/Login'
 import SignUp from './../Screen/SignUp/SignUp'
 import { connect } from 'react-redux'
+import {signOut} from './Firebase'
+import firebase from 'react-native-firebase';
+
 
 const {width, height} = Dimensions.get('window');
-
+const db = firebase.firestore();
 
 class DrawerDisplay extends Component{
     static navigationOptions = {
@@ -19,6 +22,16 @@ class DrawerDisplay extends Component{
             user: this.props.user
         }
     }
+
+    async signOut(){
+        let user = this.state.user;
+        let id = user.id;
+        let res = await signOut(id)
+        console.log(res,'ppppppppppppppppppp');
+        firebase.auth().signOut();
+        this.props.navigation.goBack();
+    }
+
 
     render(){
         return(
@@ -33,7 +46,7 @@ class DrawerDisplay extends Component{
                         </View>
                     </View>
                     <View style={{height:height*0.03,alignItems:'center',justifyContent:'center'}}>
-                        <Text style={{fontSize:16, fontFamily: 'gt-walsheim-regular'}}>User Name</Text>
+                        <Text style={{fontSize:16, fontFamily: 'gt-walsheim-regular'}}>{this.state.user && this.state.user.firstName + " " + this.state.user.lastName}</Text>
                     </View>
                 </View>
 
@@ -45,6 +58,18 @@ class DrawerDisplay extends Component{
                             </View>
                             <View style={{width: width*0.5,alignItems:'center',justifyContent:'center'}}>
                                 <Text style={{fontSize:15, fontFamily: 'gt-walsheim-regular'}}>Profile</Text>
+                            </View>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={()=>{this.signOut()}}>
+                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'grey',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
+                        <View style={{flex: 1, flexDirection: 'row'}}>
+                            <View style={{width: width*0.15,alignItems:'center',justifyContent:'center'}}>
+                                <Image source={require('../Images/logout.png')} style={{width:25,height:25}}/>
+                            </View>
+                            <View style={{width: width*0.5,alignItems:'center',justifyContent:'center'}}>
+                                <Text style={{fontSize:15,fontFamily: 'gt-walsheim-regular'}}>Logout</Text>
                             </View>
                         </View>
                     </View>
@@ -89,9 +114,7 @@ const DrawerNav = DrawerNavigator({
 
 const Route = createStackNavigator({
     LoginScreen: {screen: LoginScreen},
-
     DrawerNav: {screen: DrawerNav},
-
     SignUp: {screen: SignUp},
 
 }, {

@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic, setDeviceToken} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken, SetPosition, pushReq} from './../../Config/Firebase'
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
@@ -27,34 +27,23 @@ class MapScreen extends Component{
             prevLatLng: {},
             locSet: false,
             toggleInfo: false,
-            markers: [{
-                title: 'hello',
-                coordinates: {
-                    latitude: 24.87566586,
-                    longitude: 67.34660916
-                },
-            },
-                {
-                    title: 'hello',
-                    coordinates: {
-                        latitude: 3.149771,
-                        longitude: 101.655449
-                    },
-                }]
+            onlineMecahics: [],
+            allMechanics:[],
+            markers: [],
+            mechanicDetails:''
         }
         this.getDeviceToken = this.getDeviceToken.bind(this);
         this.getMechanic = this.getMechanic.bind(this);
     }
 
     componentWillMount(){
-        this.getDeviceToken()
+        this.getDeviceToken();
         this.getMechanic()
     }
 
     async setToken(token){
-        let userId = this.state.user.id
+        let userId = this.state.user.id;
         let res = await setDeviceToken(userId, token);
-        console.log(res,'iiiiiiiiiiiiiiiiiiiiiiiii')
     }
 
     async getDeviceToken(){
@@ -65,9 +54,37 @@ class MapScreen extends Component{
             })
     }
 
-    async getMechanic(){
-        const mechanic = await filterMechanic()
+    async setPosition(latitude, longitude){
+        let userId = this.state.user.id;
+        let res = await SetPosition(userId, latitude, longitude);
+        console.log(res,'resssssssssssssssssss')
+        console.log(latitude,'positionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
+        console.log(longitude,'positionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
     }
+
+    async getMechanic(){
+        console.log("ni chalaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        const mechanic = await filterMechanic();
+        console.log("chal gayaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        const onlineMechanic = [];
+        let markers = []
+        mechanic.map((mech)=>{
+            if(mech.deviceToken){
+                onlineMechanic.push(mech);
+                let obj = {};
+                obj.coordinates = {latitude: mech.latitude , longitude: mech.longitude};
+                obj.name = mech.firstName + " " + mech.lastName;
+                obj.description = mech.description;
+                obj.id = mech.id;
+                obj.token = mech.deviceToken;
+                markers.push(obj);
+            }
+        });
+
+        console.log(markers,'ppppppppppppppppppppppppppppppp')
+        this.setState({onlineMecahics: onlineMechanic, allMechanics: mechanic, markers: markers})
+    }
+
 
     componentDidMount() {
         this.watchID = navigator.geolocation.watchPosition(
@@ -88,6 +105,10 @@ class MapScreen extends Component{
                     distanceTravelled + this.calcDistance(newCoordinate),
                     prevLatLng: newCoordinate,
                     locSet: true
+                },()=>{
+                    //setInterval(()=>{
+                    //    this.setPosition(latitude, longitude)
+                    //},5000)
                 });
             },
             error => console.log(error),
@@ -100,6 +121,18 @@ class MapScreen extends Component{
         return haversine(prevLatLng, newLatLng) || 0;
     };
 
+    details(marker){
+        this.setState({toggleInfo: true});
+        this.setState({mechanicDetails: marker})
+    }
+
+    async pushRequest(){
+        const  {mechanicDetails} = this.state;
+        let userId = this.state.user.id;
+        let res = await pushReq(userId, mechanicDetails.id, mechanicDetails.token);
+        console.log(res,'------------=====================-------------------')
+        this.setState({toggleInfo: false})
+    }
     render() {
         return (
             <View style ={{height: height, width: width}}>
@@ -125,11 +158,11 @@ class MapScreen extends Component{
 
                     {this.state.markers.map(marker => (
                         <MapView.Marker
-                            coordinate={marker.coordinates}
-                            title={marker.title}
-                            description={"Current Location"}
+                            coordinate={marker.coordinates.latitude && marker.coordinates}
+                            title={marker.name}
+                            description={marker.description}
                             image={require('./../../Images/pin.png')}
-                            onPress={()=> this.setState({toggleInfo: true})}
+                            onPress={()=> this.details(marker)}
                         />
                     ))}
                 </MapView> :
@@ -155,7 +188,7 @@ class MapScreen extends Component{
                                     <Image style={{width: width*0.17, height: width* 0.17}} source={require('./../../Images/profile.png')}/>
                                 </View>
                                 <View style={{width: width* 0.53, height: height * 0.04, alignItems: 'center', justifyContent: 'center'}}>
-                                    <Text style={{fontWeight: 'bold'}}>Muhammad Salahuddin</Text>
+                                    <Text style={{fontWeight: 'bold'}}>{this.state.mechanicDetails && this.state.mechanicDetails.name}</Text>
                                 </View>
                                 <View style={{width: width* 0.53, height: height * 0.06, flexDirection: 'row', justifyContent:'center', alignItems: 'center'}}>
                                     <Image style={{width: width* 0.08, height: height * 0.05}} source={require('./../../Images/fillStar.png')}/>
@@ -174,7 +207,7 @@ class MapScreen extends Component{
                             </View>
                         </View>
                         <View style={{width: width, height: height * 0.065, backgroundColor:'#10ba81'}}>
-                            <TouchableOpacity style={{width: width, height: height * 0.065, alignItems: 'center', justifyContent: 'center'}}>
+                            <TouchableOpacity onPress = {()=> this.pushRequest()}style={{width: width, height: height * 0.065, alignItems: 'center', justifyContent: 'center'}}>
                                 <Text style={{fontSize: 20}}> Request</Text>
                             </TouchableOpacity>
                         </View>
