@@ -4,11 +4,11 @@ import {
     Text,
     View,
     Image,
-    Platform, Dimensions, ActivityIndicator, TouchableOpacity
+    Platform, Dimensions, ActivityIndicator, TouchableOpacity,AsyncStorage
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic, setDeviceToken, SetPosition, pushReq} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken, SetPosition, pushReq, remoteNotification} from './../../Config/Firebase'
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
@@ -39,8 +39,14 @@ class MapScreen extends Component{
     componentWillMount(){
         this.getDeviceToken();
         this.getMechanic()
+        this.setAsyncData()
     }
-
+    async setAsyncData(){
+        let user = this.props.user;
+        let userr = JSON.stringify(user);
+        console.log(user,'5555555553333333333333333333333')
+        await AsyncStorage.setItem('user', userr);
+    }
     async setToken(token){
         let userId = this.props.user.user.id;
         let res = await setDeviceToken(userId, token);
@@ -128,7 +134,6 @@ class MapScreen extends Component{
         const  {mechanicDetails} = this.state;
         let userId = this.props.user.user.id;
         let res = await pushReq(userId, mechanicDetails.id, mechanicDetails.token);
-         console.log(res,'------------=====================-------------------')
         this.setState({toggleInfo: false})
     }
     render() {

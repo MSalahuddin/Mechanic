@@ -107,6 +107,19 @@ const pushReq = (userId, id, token)=>{
     })
 };
 
+const remoteNotification = (token)=>{
+    return new Promise((resolve, reject)=>{
+        const notification = new firebase.notifications.Notification()
+            .setNotificationId(token)
+            .setTitle('My notification title')
+            .setBody('My notification body')
+            .setData({
+                key1: 'value1',
+                key2: 'value2',
+            });
+    })
+
+}
 
 export {
     loginUser,
@@ -115,5 +128,6 @@ export {
     setDeviceToken,
     signOut,
     SetPosition,
-    pushReq
+    pushReq,
+    remoteNotification
 }

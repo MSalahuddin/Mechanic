@@ -1,5 +1,5 @@
 import React,{Component} from 'react';
-import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator} from 'react-native';
+import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator, AsyncStorage} from 'react-native';
 import PhoneInput from 'react-native-phone-input';
 import Styles from './Styles'
 import {loginUser} from "../../Config/Firebase";
@@ -28,6 +28,18 @@ class LoginScreen extends Component{
         this.confirmCode = this.confirmCode.bind(this);
     }
 
+    componentWillMount(){
+        this.autoLogin()
+    }
+    async autoLogin(){
+        const value = await AsyncStorage.getItem('user');
+        const user = JSON.parse(value);
+        if(user){
+            this.props.onLogin(user.user.id);
+            console.log(user,'uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuyyyyyyyyyyyyyyyyyyyyyyyyyy')
+            this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+        }
+    }
    async login(){
         const {phoneNo, loginLoader} = this.state;
         this.setState({loginLoader: true})

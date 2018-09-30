@@ -19,7 +19,7 @@ class DrawerDisplay extends Component{
     constructor(props){
         super(props);
         this.state = {
-            user: this.props.user
+            user: this.props.user.user
         }
     }
 
@@ -28,8 +28,9 @@ class DrawerDisplay extends Component{
         let id = user.id;
         let res = await signOut(id)
         console.log(res,'ppppppppppppppppppp');
+        await AsyncStorage.setItem('user', '');
         firebase.auth().signOut();
-        this.props.navigation.goBack();
+        this.props.navigation.navigate("LoginScreen", {screen: "LoginScreen"})
     }
 
 
