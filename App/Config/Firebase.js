@@ -89,6 +89,9 @@ const SetPosition = (userId, latitude, longitude)=>{
 };
 
 const pushReq = (userId, id, token)=>{
+    console.log(userId)
+    console.log(id)
+    console.log(token,']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')
     return new Promise((resolve, reject)=>{
         db.collection('users').doc(userId).collection('pushReq').doc(id).set({
             mechanicId: id,
@@ -102,7 +105,8 @@ const pushReq = (userId, id, token)=>{
                 reject(err)
             })
     })
-}
+};
+
 
 export {
     loginUser,

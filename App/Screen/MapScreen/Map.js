@@ -42,7 +42,7 @@ class MapScreen extends Component{
     }
 
     async setToken(token){
-        let userId = this.state.user.id;
+        let userId = this.props.user.user.id;
         let res = await setDeviceToken(userId, token);
     }
 
@@ -55,7 +55,7 @@ class MapScreen extends Component{
     }
 
     async setPosition(latitude, longitude){
-        let userId = this.state.user.id;
+        let userId = this.props.user.user.id;
         let res = await SetPosition(userId, latitude, longitude);
         console.log(res,'resssssssssssssssssss')
         console.log(latitude,'positionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
@@ -63,9 +63,7 @@ class MapScreen extends Component{
     }
 
     async getMechanic(){
-        console.log("ni chalaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         const mechanic = await filterMechanic();
-        console.log("chal gayaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         const onlineMechanic = [];
         let markers = []
         mechanic.map((mech)=>{
@@ -96,7 +94,7 @@ class MapScreen extends Component{
                     latitude,
                     longitude
                 };
-
+                this.setPosition(latitude, longitude);
                 this.setState({
                     latitude,
                     longitude,
@@ -128,12 +126,13 @@ class MapScreen extends Component{
 
     async pushRequest(){
         const  {mechanicDetails} = this.state;
-        let userId = this.state.user.id;
+        let userId = this.props.user.user.id;
         let res = await pushReq(userId, mechanicDetails.id, mechanicDetails.token);
-        console.log(res,'------------=====================-------------------')
+         console.log(res,'------------=====================-------------------')
         this.setState({toggleInfo: false})
     }
     render() {
+        console.log(this.props.user,'-----6666666666666666666666666666666---=============================')
         return (
             <View style ={{height: height, width: width}}>
                 <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
@@ -157,13 +156,14 @@ class MapScreen extends Component{
                     <Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
 
                     {this.state.markers.map(marker => (
+                        marker.coordinates ?
                         <MapView.Marker
                             coordinate={marker.coordinates.latitude && marker.coordinates}
                             title={marker.name}
                             description={marker.description}
                             image={require('./../../Images/pin.png')}
                             onPress={()=> this.details(marker)}
-                        />
+                        />: null
                     ))}
                 </MapView> :
                     <View style={{width: width, height: height, alignItems: 'center', justifyContent: 'center'}}>

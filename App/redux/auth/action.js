@@ -12,10 +12,9 @@ export const onLogin = (payload) => {
             .onSnapshot((doc) => {
                 let user = doc.data();
                 let userId = {id: payload };
-                console.log("Current data: ", doc.data());
                 dispatch({
                     type: LOGIN,
-                    payload: {...userId, ...user}
+                    payload: {userId, user}
                 });
             }, (e) => {
                 console.log('Something Went Wrong from onLogin Redux');
