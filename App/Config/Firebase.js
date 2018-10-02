@@ -95,6 +95,8 @@ const pushReq = (userId, id, token)=>{
     return new Promise((resolve, reject)=>{
         db.collection('users').doc(userId).collection('pushReq').doc(id).set({
             mechanicId: id,
+            userId:userId,
+            message: "Someone calling you",
             createdAt: Date.now(),
             token: token,
         })

@@ -19,7 +19,7 @@ class DrawerDisplay extends Component{
     constructor(props){
         super(props);
         this.state = {
-            user: this.props.user.user
+            user: this.props.user ? this.props.user: ''
         }
     }
 
@@ -35,6 +35,7 @@ class DrawerDisplay extends Component{
 
 
     render(){
+        console.log(this.state.user,'userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr')
         return(
             <View style={{flex: 1,flexDirection: 'column'}}>
 

@@ -48,7 +48,7 @@ class MapScreen extends Component{
         await AsyncStorage.setItem('user', userr);
     }
     async setToken(token){
-        let userId = this.props.user.user.id;
+        let userId = this.props.user.id;
         let res = await setDeviceToken(userId, token);
     }
 
@@ -61,7 +61,7 @@ class MapScreen extends Component{
     }
 
     async setPosition(latitude, longitude){
-        let userId = this.props.user.user.id;
+        let userId = this.props.user.id;
         let res = await SetPosition(userId, latitude, longitude);
         console.log(res,'resssssssssssssssssss')
         console.log(latitude,'positionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
@@ -132,7 +132,7 @@ class MapScreen extends Component{
 
     async pushRequest(){
         const  {mechanicDetails} = this.state;
-        let userId = this.props.user.user.id;
+        let userId = this.props.user.id;
         let res = await pushReq(userId, mechanicDetails.id, mechanicDetails.token);
         this.setState({toggleInfo: false})
     }

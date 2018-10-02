@@ -1,5 +1,5 @@
 import React,{Component} from 'react';
-import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator, AsyncStorage} from 'react-native';
+import {View,Text, Image, Dimensions, TouchableOpacity, TextInput, Button, Alert, ActivityIndicator, AsyncStorage, recieverId} from 'react-native';
 import PhoneInput from 'react-native-phone-input';
 import Styles from './Styles'
 import {loginUser} from "../../Config/Firebase";
@@ -30,14 +30,36 @@ class LoginScreen extends Component{
 
     componentWillMount(){
         this.autoLogin()
+        this.getPermission();
     }
+    async getPermission() {
+    try {
+        const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+                'title': 'Cool Photo App Camera Permission',
+                'message': 'Cool Photo App needs access to your camera ' +
+                'so you can take awesome pictures.'
+            }
+        )
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log("You can use the camera")
+        } else {
+            console.log("Camera permission denied")
+        }
+    } catch (err) {
+        console.warn(err)
+    }
+}
     async autoLogin(){
         const value = await AsyncStorage.getItem('user');
         const user = JSON.parse(value);
         if(user){
-            this.props.onLogin(user.user.id);
+            this.props.onLogin(user.id);
             console.log(user,'uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuyyyyyyyyyyyyyyyyyyyyyyyyyy')
-            this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+            setTimeout(()=>{
+                this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+            },3000)
         }
     }
    async login(){
@@ -64,7 +86,9 @@ class LoginScreen extends Component{
                     this.props.onLogin(user._user.uid);
                     Alert.alert('', 'Code confirmed')
                     this.setState({codeInput: ''});
-                    this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+                    setTimeout(()=>{
+                        this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+                    },3000)
                 })
                 .catch(error => {
                     Alert.alert('', 'Unconfirmed Code')

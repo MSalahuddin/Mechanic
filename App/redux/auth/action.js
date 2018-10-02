@@ -14,7 +14,7 @@ export const onLogin = (payload) => {
                 let userId = {id: payload };
                 dispatch({
                     type: LOGIN,
-                    payload: {userId, user}
+                    payload: {...userId, ...user}
                 });
             }, (e) => {
                 console.log('Something Went Wrong from onLogin Redux');

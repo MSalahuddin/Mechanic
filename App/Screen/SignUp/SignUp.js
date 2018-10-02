@@ -69,7 +69,7 @@ export default class SignUp extends Component{
                         phoneNo: phoneNo,
                         createdAt: Date.now(),
                         description: description,
-                        isMechanic: true,
+                        isMechanic: false,
                         id: user._user.uid
                     })
                         .then((res)=>{
