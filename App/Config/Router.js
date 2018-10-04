@@ -4,6 +4,8 @@ import React, { Component } from 'react';
 import MapScreen from './../Screen/MapScreen/Map'
 import LoginScreen from './../Screen/Login/Login'
 import SignUp from './../Screen/SignUp/SignUp'
+import Profile from './../Screen/ProfileUpdate/profile'
+import UpdatePassword from './../Screen/ProfileUpdate/UpdatePassword'
 import { connect } from 'react-redux'
 import {signOut} from './Firebase'
 import firebase from 'react-native-firebase';
@@ -107,10 +109,10 @@ const DrawerNavigatorConfig =  {
 
 const DrawerNav = DrawerNavigator({
 
-    MapScreen: {
-        screen: MapScreen,
+    MapScreen: {screen: MapScreen,},
+    Profile:{screen: Profile},
+    UpdatePassword: {screen: UpdatePassword}
 
-    },
 
 }, DrawerNavigatorConfig);
 
