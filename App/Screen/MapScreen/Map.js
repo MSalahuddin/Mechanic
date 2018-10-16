@@ -12,7 +12,10 @@ import {filterMechanic, setDeviceToken, SetPosition, pushReq, remoteNotification
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
+import MapViewDirections from 'react-native-maps-directions';
+
 const {height, width} = Dimensions.get('window')
+
 
 class MapScreen extends Component{
 
@@ -30,21 +33,25 @@ class MapScreen extends Component{
             onlineMecahics: [],
             allMechanics:[],
             markers: [],
-            mechanicDetails:''
+            mechanicDetails:'',
+            jobNotif: '',
+            notifOpen: false,
+            distOrigin: '',
+            distDestination: ''
+
         }
         this.getDeviceToken = this.getDeviceToken.bind(this);
-        this.getMechanic = this.getMechanic.bind(this);
+        this.getMechanicAndUser = this.getMechanicAndUser.bind(this);
     }
 
     componentWillMount(){
         this.getDeviceToken();
-        this.getMechanic()
-        this.setAsyncData()
+        this.getMechanicAndUser();
+        this.setAsyncData();
     }
     async setAsyncData(){
         let user = this.props.user;
         let userr = JSON.stringify(user);
-        console.log(user,'5555555553333333333333333333333')
         await AsyncStorage.setItem('user', userr);
     }
     async setToken(token){
@@ -63,15 +70,21 @@ class MapScreen extends Component{
     async setPosition(latitude, longitude){
         let userId = this.props.user.id;
         let res = await SetPosition(userId, latitude, longitude);
-        console.log(res,'resssssssssssssssssss')
-        console.log(latitude,'positionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
-        console.log(longitude,'positionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn')
     }
 
-    async getMechanic(){
+    async getMechanicAndUser(){
         const mechanic = await filterMechanic();
         const onlineMechanic = [];
-        let markers = []
+        const user = this.props.user;
+        const userObj = {};
+        userObj.coordinates = {latitude: user.latitude, longitude: user.longitude};
+        userObj.name = user.firstName + " " + user.lastName;
+        userObj.description = user.description;
+        userObj.id = user.id;
+        userObj.token = user.deviceToken;
+        userObj.image = user.profilePicture;
+
+        let markers = [];
         mechanic.map((mech)=>{
             if(mech.deviceToken){
                 onlineMechanic.push(mech);
@@ -81,16 +94,46 @@ class MapScreen extends Component{
                 obj.description = mech.description;
                 obj.id = mech.id;
                 obj.token = mech.deviceToken;
+                obj.image = mech.profilePicture
                 markers.push(obj);
             }
         });
-
-        console.log(markers,'ppppppppppppppppppppppppppppppp')
+        markers.push(userObj);
         this.setState({onlineMecahics: onlineMechanic, allMechanics: mechanic, markers: markers})
     }
 
 
     componentDidMount() {
+       this.watchPosition()
+        this.notificationOpenedListener = firebase.notifications().onNotificationOpened((notificationOpen: NotificationOpen) => {
+            // Get the action triggered by the notification being opened
+            const action = notificationOpen.action;
+            // Get information about the notification that was opened
+            const notification: Notification = notificationOpen.notification;
+            const jobData = notification._data;
+            const user = this.props.user;
+            console.log(this.state.user,'uuuuuuuuuuuuuuiiiiiiiiiiiiiiiiii')
+            console.log(jobData,'dsdddddddddddddddddddddddddddddddd')
+            const destinationLogitude = parseFloat(jobData.longitude);
+            const destinationLatitude = parseFloat(jobData.latitude);
+            console.log(destinationLatitude)
+            console.log(destinationLogitude,'.......................................')
+
+            const origin = {latitude: 24.87217, longitude: 67.3529129};
+            const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
+            const obj = {
+                coordinates: {latitude: destinationLatitude , longitude: destinationLogitude},
+                name: jobData.name,
+                id: jobData.id,
+                phoneNo: jobData.phoneNo
+                }
+
+            console.log(obj,'////////////////////////')
+            notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination})
+        });
+    }
+
+    watchPosition(){
         this.watchID = navigator.geolocation.watchPosition(
             position => {
                 const {routeCoordinates, distanceTravelled } =   this.state;
@@ -137,7 +180,7 @@ class MapScreen extends Component{
         this.setState({toggleInfo: false})
     }
     render() {
-        console.log(this.props.user,'-----6666666666666666666666666666666---=============================')
+        const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
         return (
             <View style ={{height: height, width: width}}>
                 <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
@@ -158,18 +201,46 @@ class MapScreen extends Component{
                         latitudeDelta: 0.015,
                         longitudeDelta: 0.0121}}
                 >
-                    <Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
-
-                    {this.state.markers.map(marker => (
-                        marker.coordinates ?
+                    {this.state.notifOpen ?
+                    <MapViewDirections
+                        origin={this.state.distOrigin}
+                        destination={this.state.distDestination}
+                        apikey={GOOGLE_MAPS_APIKEY}
+                        strokeWidth={3}
+                        strokeColor="hotpink"
+                    /> :
+                        null
+                    }
+                    {this.state.user.isMechanic ?
                         <MapView.Marker
-                            coordinate={marker.coordinates.latitude && marker.coordinates}
-                            title={marker.name}
-                            description={marker.description}
-                            image={require('./../../Images/pin.png')}
+                            coordinate={marker.coordinates.latitude && this.state.jobNotif.coordinates}
+                            title={this.state.jobNotif.name}
+                            image={require('./../../Images/userPointer.png')}
                             onPress={()=> this.details(marker)}
-                        />: null
-                    ))}
+                        />
+                        :
+                        this.state.markers.map(marker => (
+                            marker.coordinates ?
+                                marker.id == this.state.user.id ?
+                                    <MapView.Marker
+                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        title={marker.name}
+                                        description={marker.description}
+                                        image={require('./../../Images/userPointer.png')}
+                                        onPress={()=> this.details(marker)}
+                                    />
+                                    :
+
+                                    <MapView.Marker
+                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        title={marker.name}
+                                        description={marker.description}
+                                        image={require('./../../Images/mechanicPointer.png')}
+                                        onPress={()=> this.details(marker)}
+                                    />: null
+                        ))
+                    }
+
                 </MapView> :
                     <View style={{width: width, height: height, alignItems: 'center', justifyContent: 'center'}}>
                         <ActivityIndicator size="large" color="#0000ff" />
@@ -190,7 +261,12 @@ class MapScreen extends Component{
                         <View style={{width: width, height: height* 0.2, backgroundColor:'white', flexDirection: 'row'}}>
                             <View style={{width: width* 0.53, height: height* 0.2, alignItems: 'center'}}>
                                 <View style={{width: width*0.17, height: width* 0.17, marginTop: height* 0.01, borderRadius: 100}}>
-                                    <Image style={{width: width*0.17, height: width* 0.17}} source={require('./../../Images/profile.png')}/>
+                                    {this.state.mechanicDetails && this.state.mechanicDetails.image ?
+                                        <Image style={{width: width*0.17, height: width* 0.17, borderRadius: 100}} source={{uri: this.state.mechanicDetails.image}}/>
+                                        :
+                                        <Image style={{width: width*0.17, height: width* 0.17}} source={require('./../../Images/profile.png')}/>
+                                    }
+
                                 </View>
                                 <View style={{width: width* 0.53, height: height * 0.04, alignItems: 'center', justifyContent: 'center'}}>
                                     <Text style={{fontWeight: 'bold'}}>{this.state.mechanicDetails && this.state.mechanicDetails.name}</Text>

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View, Text, Dimensions, Image, TouchableOpacity, TextInput,ScrollView, StyleSheet,ActivityIndicator,Alert} from 'react-native'
+import {View, Text, Dimensions, Image, Button, TouchableOpacity, TextInput,ScrollView, StyleSheet,ActivityIndicator,Alert} from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { ActionSheetCustom as ActionSheet } from 'react-native-actionsheet'
 import { connect } from 'react-redux'
@@ -7,6 +7,7 @@ import Styles from './Styles'
 import { TextField } from 'react-native-material-textfield';
 import CheckBox from 'react-native-modest-checkbox'
 var ImagePicker = require('react-native-image-picker');
+import {uploadImage, updateProfile} from "../../Config/Firebase";
 
 const {width, height} = Dimensions.get('window');
 
@@ -21,9 +22,11 @@ class Profile extends Component{
             loader : false,
             role : '',
             mobile: this.props.user.phoneNo,
-            profileImg : this.props.user.profile_picture || '',
+            profileImg : this.props.user.profilePicture || '',
             loader : false,
-            isMechanic: this.props.user.isMechanic
+            isMechanic: this.props.user.isMechanic,
+            sendCode: false,
+            confirmResult:null,
         };
         this._onOpenActionSheet = this.onOpenActionSheet.bind(this);
 
@@ -57,22 +60,75 @@ class Profile extends Component{
 
     async updateProfile(){
 
-        const {firstName, lastName, mobile ,memberShip, profileImg } = this.state;
+        const {firstName, lastName,email, profileImg } = this.state;
         try {
             this.setState({loader: true});
-            const response = await fetch(profileImg);
-            const blob = await response.blob();
-            uploadImage(this.props.user.id, blob);
-            await updateProfile(this.props.user.id, {first_name: firstName, last_name: lastName, mobile : mobile, memberShip: memberShip});
+            const imageRes = await uploadImage(this.props.user.id, profileImg);
+            console.log(imageRes,'//////////////////////////////////////')
+           let res = await updateProfile(this.props.user.id, {firstName: firstName, lastName: lastName, email: email, profilePicture: imageRes});
+            Alert.alert('',res);
             this.setState({loader: false});
 
         } catch (e) {
             this.setState({loader: false});
-            Alert.alert('', e.error)
+            Alert.alert("Error")
         }
     }
 
+    inputFields(){
+        return(
+            <View style={{width: width, alignItems:'center', justifyContent: 'center'}}>
+                <View style={Styles.inputField}>
+                    <TextField
+                        label='First Name'
+                        value={this.state.firstName}
+                        onChangeText= {(text)=> this.setState({firstName: text})}
+                        style={{ fontFamily: 'Lato-Regular' }}
+                    />
+                </View>
+                <View style={Styles.inputField}>
+                    <TextField
+                        label='Last Name'
+                        value={this.state.lastName}
+                        onChangeText= {(text)=> this.setState({lastName: text})}
+                        style={{ fontFamily: 'Lato-Regular' }}
+                    />
+                </View>
+                <View style={Styles.inputField}>
+                    <TextField
+                        label='Email'
+                        value={this.state.email}
+                        onChangeText= {(text)=> this.setState({email: text})}
+                        style={{ fontFamily: 'Lato-Regular' }}
+                    />
+                </View>
+                <View style={Styles.inputField}>
+                    <TextField
+                        label='Mobile no'
+                        value={this.state.mobile}
+                        editable = {false}
+                        keyboardType = 'numeric'
+                        onChangeText= {(text)=> this.setState({mobile: text})}
+                        style={{ fontFamily: 'Lato-Regular' }}
+                        characterRestriction = {13}
+                    />
+                </View>
+                <View style = {{width: width, height: height * 0.05, marginTop: height * 0.05, flexDirection: 'row'}}>
+                    <CheckBox
+                        containerStyle = {{marginLeft: width * 0.15}}
+                        label='Mechanic'
+                        checked = {this.state.isMechanic ? true : false}
 
+                    />
+                    <CheckBox
+                        containerStyle = {{marginLeft: width * 0.15}}
+                        label='User'
+                        checked = {this.state.isMechanic ? false : true}
+                    />
+                </View>
+            </View>
+        )
+    }
     render(){
         const {profileImg} = this.state;
 
@@ -85,100 +141,59 @@ class Profile extends Component{
 
         return(
             <View style={Styles.main}>
-                <View style={Styles.sub}>
-                    <KeyboardAwareScrollView innerRef={ref => {this.scroll = ref}} enableOnAndroid={true} >
 
-                        <View style={Styles.headerMain}>
-                            <View style={Styles.headerSub}>
-                                <View style={Styles.headerBack}>
-                                    <TouchableOpacity onPress={()=> this.props.navigation.goBack()}>
-                                        <Image source={require('../../Images/leftArrow.png')} style={Styles.headerImg}/>
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={Styles.headerHeading}>
-                                    <Text style={Styles.headerText}>Update Profile</Text>
+                    <View style={Styles.sub}>
+                        <KeyboardAwareScrollView innerRef={ref => {this.scroll = ref}} enableOnAndroid={true} >
+                            <View style={Styles.headerMain}>
+                                <View style={Styles.headerSub}>
+                                    <View style={Styles.headerBack}>
+                                        <TouchableOpacity onPress={()=> this.props.navigation.goBack()}>
+                                            <Image source={require('../../Images/leftArrow.png')} style={Styles.headerImg}/>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={Styles.headerHeading}>
+                                        <Text style={Styles.headerText}>Update Profile</Text>
+                                    </View>
                                 </View>
                             </View>
-                        </View>
-                        <View style={Styles.subMain}>
-                            <View style={Styles.subSub}>
-                                <View style={Styles.profilePicCont}>
-                                    <TouchableOpacity style={Styles.picSub} onPress={this._onOpenActionSheet}>
+                                <View style={Styles.subMain}>
+                                    <View style={Styles.subSub}>
+                                        <View style={Styles.profilePicCont}>
+                                            <TouchableOpacity style={Styles.picSub} onPress={this._onOpenActionSheet}>
 
-                                        <Image source={profileImg ? {uri: profileImg} : require('./../../Images/profile.png')} style={Styles.pic} />
+                                                <Image
+                                                    source={profileImg ? {uri: profileImg} : require('./../../Images/profile.png')}
+                                                    style={Styles.pic}/>
 
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={Styles.formMain}>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={Styles.formMain}>
 
-                                    <View style={{width: width, alignItems:'center', justifyContent: 'center'}}>
-                                        <View style={Styles.inputField}>
-                                            <TextField
-                                                label='First Name'
-                                                value={this.state.firstName}
-                                                onChangeText= {(text)=> this.setState({firstName: text})}
-                                                style={{ fontFamily: 'Lato-Regular' }}
-                                            />
-                                        </View>
-                                        <View style={Styles.inputField}>
-                                            <TextField
-                                                label='Last Name'
-                                                value={this.state.lastName}
-                                                onChangeText= {(text)=> this.setState({lastName: text})}
-                                                style={{ fontFamily: 'Lato-Regular' }}
-                                            />
-                                        </View>
-                                        <View style={Styles.inputField}>
-                                            <TextField
-                                                label='Email'
-                                                value={this.state.email}
-                                                onChangeText= {(text)=> this.setState({email: text})}
-                                                style={{ fontFamily: 'Lato-Regular' }}
-                                            />
-                                        </View>
-                                        <View style={Styles.inputField}>
-                                            <TextField
-                                                label='Mobile no'
-                                                value={this.state.mobile}
-                                                keyboardType = 'numeric'
-                                                onChangeText= {(text)=> this.setState({mobile: text})}
-                                                style={{ fontFamily: 'Lato-Regular' }}
-                                                characterRestriction = {13}
-                                            />
-                                        </View>
-                                        <View style = {{width: width, height: height * 0.05, marginTop: height * 0.05, flexDirection: 'row'}}>
-                                            <CheckBox
-                                                containerStyle = {{marginLeft: width * 0.15}}
-                                                label='Mechanic'
-                                                checked = {this.state.isMechanic ? true : false}
+                                            <View>
+                                                {this.inputFields()}
+                                            </View>
 
-                                            />
-                                            <CheckBox
-                                                containerStyle = {{marginLeft: width * 0.15}}
-                                                label='User'
-                                                checked = {this.state.isMechanic ? false : true}
-                                            />
+
+                                        </View>
+                                        <View style={Styles.footerMain}>
+                                            <TouchableOpacity onPress={()=>{this.updateProfile()}}
+                                                              style={Styles.btn}>
+                                                {this.state.loader ? <ActivityIndicator size="small" color="#0000ff"/> :
+                                                    <Text style={Styles.btnText}>Update Profile</Text>}
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={Styles.footerMain}>
+                                            <TouchableOpacity
+                                                onPress={() => this.props.navigation.navigate("UpdatePassword", {screen: "UpdatePassword"})}
+                                                style={Styles.btn2}>
+                                                <Text style={Styles.footerText}>For password update</Text>
+                                            </TouchableOpacity>
                                         </View>
                                     </View>
-
-
                                 </View>
-                                <View style={Styles.footerMain}>
-                                    <TouchableOpacity onPress={()=>{this.updateProfile()}} style={Styles.btn}>
-                                        {this.state.loader ? <ActivityIndicator size="small" color="#0000ff" /> : <Text style={Styles.btnText}>Update Profile</Text>}
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={Styles.footerMain}>
-                                    <TouchableOpacity onPress={() => this.props.navigation.navigate("UpdatePassword", {screen: "UpdatePassword"})} style={Styles.btn2}>
-                                        <Text style={Styles.footerText}>For password update</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
+                        </KeyboardAwareScrollView>
 
-                        </View>
-                    </KeyboardAwareScrollView>
-
-                </View>
+                    </View>
                 <View>
                     <ActionSheet
                         ref={o => this.ActionSheet = o}

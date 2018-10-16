@@ -45,7 +45,10 @@ class DrawerDisplay extends Component{
                     <View style={{height : height*0.15,alignItems:'center',justifyContent:'center'}}>
                         <View style={{height:height*0.12, width:height*0.12,borderRadius:100,alignItems:'center',justifyContent:'center', borderWidth:1,borderColor:'grey'}}>
 
+                            {this.state.user && this.state.user.profilePicture ?
+                                <Image source={{uri:this.state.user.profilePicture}} style={{width:60,height:60,borderRadius : 100}}/>:
                                 <Image source={require('../Images/profile.png')} style={{width:60,height:60,borderRadius : 100}}/>
+                            }
 
                         </View>
                     </View>

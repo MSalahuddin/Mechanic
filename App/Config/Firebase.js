@@ -80,7 +80,7 @@ const SetPosition = (userId, latitude, longitude)=>{
     return new Promise((resolve, reject)=>{
         db.collection('users').doc(userId).update({longitude: longitude, latitude: latitude})
             .then((res)=>{
-                resolve(res);
+                resolve("Position Updated");
             })
             .catch((err)=>{
                 reject(err)
@@ -104,24 +104,41 @@ const pushReq = (userId, id, token)=>{
                 resolve('your request send successfully');
             })
             .catch((err)=>{
+                console.log(err,'---------------------')
                 reject(err)
             })
     })
 };
 
-const remoteNotification = (token)=>{
+const uploadImage = (userId, image) => {
+    var storageRef = firebase.storage().ref();
+    var imagesRef = storageRef.child('images/profile_'+ userId +'.jpg');
+    return new Promise((resolve, reject) => {
+        imagesRef.put(image, { contentType: image })
+            .then(function(snapshot) {
+                imagesRef.getDownloadURL().then(function(url) {
+                    resolve(url);
+                }).catch(function(error) {
+                    reject({error: error.message})
+                });
+            }).catch((e) => {
+            reject({error: e.message})
+        });
+    })
+};
+
+const updateProfile = (userId, params) => {
     return new Promise((resolve, reject)=>{
-        const notification = new firebase.notifications.Notification()
-            .setNotificationId(token)
-            .setTitle('My notification title')
-            .setBody('My notification body')
-            .setData({
-                key1: 'value1',
-                key2: 'value2',
-            });
+        db.collection('users').doc(userId).update(params)
+            .then((res)=>{
+                resolve("Profile update successfully")
+            })
+        .catch((err)=>{
+            reject(err)
+        })
     })
 
-}
+};
 
 export {
     loginUser,
@@ -131,5 +148,6 @@ export {
     signOut,
     SetPosition,
     pushReq,
-    remoteNotification
+    uploadImage,
+    updateProfile
 }

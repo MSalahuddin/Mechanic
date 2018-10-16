@@ -17,6 +17,7 @@
     "react-native-image-picker": "^0.26.10",
     "react-native-keyboard-aware-scroll-view": "^0.6.0",
     "react-native-maps": "^0.21.0",
+    "react-native-maps-directions": "^1.6.0",
     "react-native-material-textfield": "^0.12.0",
     "react-native-modest-checkbox": "^3.0.2",
     "react-native-phone-input": "^0.2.1",

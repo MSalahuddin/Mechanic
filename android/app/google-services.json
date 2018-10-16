@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "869122385591-deu9r4pejt2sjf3jiregnpk76stsuccq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mechanicapp",
+            "certificate_hash": "6fe99ceda832c31b8d014823a1b59ba1ebdb4799"
+          }
+        },
+        {
           "client_id": "869122385591-lfr6gs3ieaegv1bm61f01i9f1h46uvlq.apps.googleusercontent.com",
           "client_type": 3
         }

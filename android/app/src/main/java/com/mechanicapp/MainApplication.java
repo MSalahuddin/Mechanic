@@ -16,6 +16,7 @@ import com.facebook.soloader.SoLoader;
 import com.airbnb.android.react.maps.MapsPackage;
 import java.util.Arrays;
 import java.util.List;
+import io.invertase.firebase.storage.RNFirebaseStoragePackage;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -35,7 +36,8 @@ public class MainApplication extends Application implements ReactApplication {
             new MapsPackage(),
             new RNFirebaseAuthPackage(),
             new RNFirebaseMessagingPackage(),
-            new RNFirebaseNotificationsPackage()
+            new RNFirebaseNotificationsPackage(),
+            new RNFirebaseStoragePackage()
       );
     }
 

@@ -70,7 +70,8 @@ export default class SignUp extends Component{
                         createdAt: Date.now(),
                         description: description,
                         isMechanic: false,
-                        id: user._user.uid
+                        id: user._user.uid,
+                        profilePicture: ''
                     })
                         .then((res)=>{
                             Alert.alert('','Successfully registered')
