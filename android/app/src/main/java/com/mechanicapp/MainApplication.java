@@ -17,6 +17,7 @@ import com.airbnb.android.react.maps.MapsPackage;
 import java.util.Arrays;
 import java.util.List;
 import io.invertase.firebase.storage.RNFirebaseStoragePackage;
+import com.horcrux.svg.SvgPackage;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -37,7 +38,8 @@ public class MainApplication extends Application implements ReactApplication {
             new RNFirebaseAuthPackage(),
             new RNFirebaseMessagingPackage(),
             new RNFirebaseNotificationsPackage(),
-            new RNFirebaseStoragePackage()
+            new RNFirebaseStoragePackage(),
+            new SvgPackage()
       );
     }
 

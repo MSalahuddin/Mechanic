@@ -4,18 +4,21 @@ import {
     Text,
     View,
     Image,
+    Alert,
     Platform, Dimensions, ActivityIndicator, TouchableOpacity,AsyncStorage
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic, setDeviceToken, SetPosition, pushReq, remoteNotification} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq} from './../../Config/Firebase'
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
 import MapViewDirections from 'react-native-maps-directions';
+import { Container, Header, Content, Card, CardItem, Body, Button} from "native-base";
+import {BoxShadow} from 'react-native-shadow'
+import _ from 'underscore';
 
-const {height, width} = Dimensions.get('window')
-
+const {height, width} = Dimensions.get('window');
 
 class MapScreen extends Component{
 
@@ -86,6 +89,7 @@ class MapScreen extends Component{
 
         let markers = [];
         mechanic.map((mech)=>{
+            console.log(mech,'////////////////////////////................')
             if(mech.deviceToken){
                 onlineMechanic.push(mech);
                 let obj = {};
@@ -94,17 +98,20 @@ class MapScreen extends Component{
                 obj.description = mech.description;
                 obj.id = mech.id;
                 obj.token = mech.deviceToken;
-                obj.image = mech.profilePicture
+                obj.image = mech.profilePicture;
+                obj.jobs = mech.jobs ? mech.jobs : [];
+                obj.phoneNo = mech.phoneNo;
                 markers.push(obj);
             }
         });
+        console.log(markers,'sssssssssssssmmmmmmmmmmmmm')
         markers.push(userObj);
         this.setState({onlineMecahics: onlineMechanic, allMechanics: mechanic, markers: markers})
     }
 
 
     componentDidMount() {
-       this.watchPosition()
+       this.watchPosition();
         this.notificationOpenedListener = firebase.notifications().onNotificationOpened((notificationOpen: NotificationOpen) => {
             // Get the action triggered by the notification being opened
             const action = notificationOpen.action;
@@ -128,8 +135,9 @@ class MapScreen extends Component{
                 phoneNo: jobData.phoneNo
                 }
 
-            console.log(obj,'////////////////////////')
-            notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination})
+            notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination},()=>{
+                this.setUserView()
+            })
         });
     }
 
@@ -169,6 +177,7 @@ class MapScreen extends Component{
     };
 
     details(marker){
+        console.log(marker,'sssssssssssssssppppppppppppppppppppppppp')
         this.setState({toggleInfo: true});
         this.setState({mechanicDetails: marker})
     }
@@ -177,19 +186,155 @@ class MapScreen extends Component{
         const  {mechanicDetails} = this.state;
         let userId = this.props.user.id;
         let res = await pushReq(userId, mechanicDetails.id, mechanicDetails.token);
+        if(res.id){
+            Alert.alert('','Your job send successfully');
+
+            let jobs = [];
+            jobs = mechanicDetails.jobs;
+            jobs.push(res.id)
+            let ress = await upateMechaincJobs(jobs, mechanicDetails.id);
+        }
         this.setState({toggleInfo: false})
     }
-    render() {
-        const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
-        return (
-            <View style ={{height: height, width: width}}>
-                <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
-                    <TouchableOpacity style= {Styles.headerSubContent}  onPress={() => this.props.navigation.openDrawer()}>
-                        <Image source={require('./../../Images/menu.png')} style={Styles.menuImg}/>
+
+    async acceptJob(){
+        const {user, jobNotif} = this.state;
+        const res = await getMechanicData(user.id);
+        const jobs = res.jobs;
+        const currentJob = _.last(jobs);
+        console.log(jobNotif,'skkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk')
+        console.log(currentJob,'/////////////////////////')
+        console.log(jobs,'sssssssssssssssssssssssss')
+        console.log(res,';;;;;;;;;;;;;;;;')
+        let updateStatusRes = await acceptJobReq(currentJob, jobNotif.id);
+        console.log(updateStatusRes,'llllllllllllllllllllllllllllllllll')
+
+    }
+
+    setUserView(){
+        const {jobNotif} = this.state;
+        return(
+            <View style = {{width: width, height: height * 0.4, position: 'absolute', marginTop: height * 0.5}}>
+                <Content padder>
+                    <Card>
+                        <CardItem header bordered style = {{height: height * 0.07}}>
+                            <View style={{width:width, flexDirection: 'row'}}>
+                                <View style={{width: width * 0.65, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
+                                    <Text style={{color:'#80aaff', fontSize: 15, fontWeight: 'bold'}}>Reaching destination in 19 minutes!</Text>
+                                </View>
+                                <View style={{width: width * 0.25, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
+                                    <Text style={{color:'#80aaff', fontSize: 17, fontWeight: 'bold'}}>{parseFloat(this.state.distanceTravelled).toFixed(2)} km</Text>
+                                </View>
+                            </View>
+                        </CardItem>
+                        <CardItem bordered>
+                            <Body>
+                                <View style = {{width: width, height: height * 0.13, flexDirection: 'row'}}>
+                                    <View style = {{width: width * 0.4, justifyContent: 'center', alignItems: 'center'}}>
+                                        <View style = {{width: width * 0.15, height: width * 0.15, borderRadius: 100}}>
+                                            <Image source = {require('./../../Images/profile.png')} style = {{width: width * 0.12, height: width * 0.12}}/>
+                                        </View>
+                                        <View style = {{width: width * 0.4}}>
+                                            <Text style = {{fontSize: 14, fontWeight: 'bold', marginLeft: width * 0.1}}>{jobNotif.name}</Text>
+                                        </View>
+                                    </View>
+                                    <View style={{width: width* 0.003, height: height* 0.11, backgroundColor: '#b7b7b7', marginTop: height* 0.012}}>
+
+                                    </View>
+                                    <View style = {{width: width * 0.4, justifyContent: 'center', alignItems: 'center', marginLeft: width * 0.04}}>
+                                        <View style = {{width: width * 0.4, height: height * 0.06}}>
+                                            <Text style = {{fontSize: 15, fontWeight: 'bold'}}>{jobNotif.phoneNo}</Text>
+                                        </View>
+                                        <View style = {{width: width * 0.4, height: height * 0.08}}>
+                                            <Text style = {{fontSize: 15, fontWeight: 'bold'}}>Vehicle Type:</Text>
+                                            <Text style = {{fontSize: 15, fontWeight: 'bold'}}>Bike</Text>
+                                        </View>
+
+                                    </View>
+                                </View>
+                            </Body>
+                        </CardItem>
+                        <CardItem footer bordered>
+                            <View style = {{width: width, height: height * 0.08, flexDirection: 'row'}}>
+                                <TouchableOpacity onPress = {() => {this.acceptJob()}} style = {{width: width * 0.4, height: height * 0.07, justifyContent: 'center', alignItems: 'center', borderRadius: 20, backgroundColor: '#4d79ff'}}>
+                                    <Text>Accept Job</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style = {{width: width * 0.4, height: height * 0.07, marginLeft: width * 0.04, justifyContent: 'center', alignItems: 'center', borderRadius: 20, backgroundColor: '#ff3333'}}>
+                                    <Text>Reject Job</Text>
+                                </TouchableOpacity>
+
+                            </View>
+                        </CardItem>
+                    </Card>
+                </Content>
+            </View>
+
+        )
+    }
+
+    mechanicDetailsView(){
+        return(
+            <View style = {{marginTop: height * 0.2, width: width, height: height* 0.7, position: 'absolute'}}>
+                <Content padder>
+                    <Card>
+                <View style = {{width: width * 0.9, height: height * 0.25, flexDirection: 'row'}}>
+                    <View style = {{width: width * 0.5, height: height * 0.25, marginLeft: width * 0.25}}>
+                        <View style = {{width: width * 0.2, height: width * 0.2, marginLeft: width * 0.12, borderRadius: 100, marginTop: height * 0.0375 }}>
+                            {this.state.mechanicDetails && this.state.mechanicDetails.image ?
+                                <Image style={{width: width * 0.2, height: width * 0.2, borderRadius: 100}} source={{uri: this.state.mechanicDetails.image}}/>
+                                :
+                                <Image style={{width: width * 0.17, height: width * 0.17}} source={require('./../../Images/profile.png')}/>
+                            }
+                        </View>
+                        <View style = {{width: width * 0.5, height: height * 0.1, marginTop: height * 0.02, alignItems: 'center'}}>
+                            <Text style={{fontSize: 20, color: '#11397a'}}>{this.state.mechanicDetails && this.state.mechanicDetails.name}</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity onPress = {() => this.setState({toggleInfo: false})} style = {{width: width * 0.15, height: height * 0.2}}>
+                        <Image source = {require('./../../Images/delete.png')} style = {{marginTop: height * 0.035, marginLeft: width * 0.05, width: width * 0.05, height: width * 0.05}}/>
                     </TouchableOpacity>
                 </View>
-                <View style={this.state.toggleInfo ? {height: height * 0.55, width: width}: {height: height * 0.8, width: width}}>
-                {this.state.locSet ?
+                <View style = {{width : width * 0.9, height: height * 0.22}}>
+                    <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
+                        <View style = {{width: width * 0.35, height: height * 0.05}}>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Phone no:</Text>
+                        </View>
+                        <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
+                            <Text style={{color: '#11397a'}}>{this.state.mechanicDetails && this.state.mechanicDetails.phoneNo}</Text>
+                        </View>
+                    </View>
+                    <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
+                        <View style = {{width: width * 0.35, height: height * 0.05}}>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Phone no:</Text>
+                        </View>
+                        <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
+                            <Text style={{color: '#11397a'}}>+923062691335</Text>
+                        </View>
+                    </View>
+                    <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
+                        <View style = {{width: width * 0.35, height: height * 0.05}}>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Phone no:</Text>
+                        </View>
+                        <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
+                            <Text style={{color: '#11397a'}}>+923062691335</Text>
+                        </View>
+                    </View>
+                </View>
+                <TouchableOpacity onPress = {()=> this.pushRequest()} style = {{width: width * 0.9, height: height * 0.15, alignItems: 'center'}}>
+                    <Image source = {require('./../../Images/check.png')} style = {{width: width * 0.1, height: width * 0.1}}/>
+                    <Text style = {{fontSize: 25, color: '#04931e'}}>Request</Text>
+                </TouchableOpacity>
+                    </Card>
+                </Content>
+            </View>
+
+        )
+    }
+
+    mapView(){
+        const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
+        return(
+            <View style = {{flex: 1}}>
                 <MapView
                     style={styles.map}
                     showUserLocation
@@ -202,22 +347,29 @@ class MapScreen extends Component{
                         longitudeDelta: 0.0121}}
                 >
                     {this.state.notifOpen ?
-                    <MapViewDirections
-                        origin={this.state.distOrigin}
-                        destination={this.state.distDestination}
-                        apikey={GOOGLE_MAPS_APIKEY}
-                        strokeWidth={3}
-                        strokeColor="hotpink"
-                    /> :
+                        <MapViewDirections
+                            origin={this.state.distOrigin}
+                            destination={this.state.distDestination}
+                            apikey={GOOGLE_MAPS_APIKEY}
+                            strokeWidth={4}
+                            strokeColor="#0059b3"
+                        /> :
                         null
                     }
                     {this.state.user.isMechanic ?
-                        <MapView.Marker
-                            coordinate={marker.coordinates.latitude && this.state.jobNotif.coordinates}
-                            title={this.state.jobNotif.name}
-                            image={require('./../../Images/userPointer.png')}
-                            onPress={()=> this.details(marker)}
-                        />
+                        this.state.markers.map(marker => {
+
+                            if(this.state.user.id == marker.id){
+                                return(
+                                    <MapView.Marker
+                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        title={marker.name}
+                                        description={marker.description}
+                                        image={require('./../../Images/userPointer.png')}
+                                    />
+                                )
+                            }
+                        })
                         :
                         this.state.markers.map(marker => (
                             marker.coordinates ?
@@ -227,7 +379,6 @@ class MapScreen extends Component{
                                         title={marker.name}
                                         description={marker.description}
                                         image={require('./../../Images/userPointer.png')}
-                                        onPress={()=> this.details(marker)}
                                     />
                                     :
 
@@ -241,61 +392,30 @@ class MapScreen extends Component{
                         ))
                     }
 
-                </MapView> :
+                </MapView>
+            </View>
+        )
+    }
+
+    render() {
+
+        return (
+            <View style ={{height: height, width: width}}>
+                <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
+                    <TouchableOpacity style= {Styles.headerSubContent}  onPress={() => this.props.navigation.openDrawer()}>
+                        <Image source={require('./../../Images/menu.png')} style={Styles.menuImg}/>
+                    </TouchableOpacity>
+                </View>
+                <View style={this.state.toggleInfo || this.state.notifOpen ? {height: height * 0.89, width: width, backgroundColor:'red'}: {height: height * 0.89, width: width}}>
+                {this.state.locSet ? this.mapView() :
+
                     <View style={{width: width, height: height, alignItems: 'center', justifyContent: 'center'}}>
                         <ActivityIndicator size="large" color="#0000ff" />
-                    </View>}
+                    </View>
+                }
                 </View>
 
-                {this.state.toggleInfo ?
-                    <View style={{width: width, height: height * 0.335 ,backgroundColor:'red'}}>
-                        <View style={{width:width, height: height* 0.07, backgroundColor:'#7f8082', flexDirection: 'row'}}>
-                            <View style={{width: width * 0.7, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
-                                <Text style={{color:'white', fontSize: 15}}>Reaching destination in 19 minutes!</Text>
-                            </View>
-                            <View style={{width: width * 0.3, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
-                                <Text style={{color:'white', fontSize: 17}}>{parseFloat(this.state.distanceTravelled).toFixed(2)} km</Text>
-                            </View>
-                        </View>
-
-                        <View style={{width: width, height: height* 0.2, backgroundColor:'white', flexDirection: 'row'}}>
-                            <View style={{width: width* 0.53, height: height* 0.2, alignItems: 'center'}}>
-                                <View style={{width: width*0.17, height: width* 0.17, marginTop: height* 0.01, borderRadius: 100}}>
-                                    {this.state.mechanicDetails && this.state.mechanicDetails.image ?
-                                        <Image style={{width: width*0.17, height: width* 0.17, borderRadius: 100}} source={{uri: this.state.mechanicDetails.image}}/>
-                                        :
-                                        <Image style={{width: width*0.17, height: width* 0.17}} source={require('./../../Images/profile.png')}/>
-                                    }
-
-                                </View>
-                                <View style={{width: width* 0.53, height: height * 0.04, alignItems: 'center', justifyContent: 'center'}}>
-                                    <Text style={{fontWeight: 'bold'}}>{this.state.mechanicDetails && this.state.mechanicDetails.name}</Text>
-                                </View>
-                                <View style={{width: width* 0.53, height: height * 0.06, flexDirection: 'row', justifyContent:'center', alignItems: 'center'}}>
-                                    <Image style={{width: width* 0.08, height: height * 0.05}} source={require('./../../Images/fillStar.png')}/>
-                                    <Image style={{width: width* 0.08, height: height * 0.05}} source={require('./../../Images/fillStar.png')}/>
-                                    <Image style={{width: width* 0.08, height: height * 0.05}} source={require('./../../Images/fillStar.png')}/>
-                                    <Image style={{width: width* 0.08, height: height * 0.05}} source={require('./../../Images/fillStar.png')}/>
-                                    <Image style={{width: width* 0.08, height: height * 0.05}} source={require('./../../Images/fillStar.png')}/>
-                                </View>
-                            </View>
-                            <View style={{width: width* 0.005, height: height* 0.17, backgroundColor: '#b7b7b7', marginTop: height* 0.015}}>
-
-                            </View>
-                            <View style={{width: width * 0.47, height: height * 0.2, justifyContent:'center', alignItems:'center'}}>
-                                <Text style={{fontSize: 17, fontWeight: 'bold'}}>Type</Text>
-                                <Text style={{fontSize: 17, fontWeight: 'bold'}}>Motor Bike</Text>
-                            </View>
-                        </View>
-                        <View style={{width: width, height: height * 0.065, backgroundColor:'#10ba81'}}>
-                            <TouchableOpacity onPress = {()=> this.pushRequest()}style={{width: width, height: height * 0.065, alignItems: 'center', justifyContent: 'center'}}>
-                                <Text style={{fontSize: 20}}> Request</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>:
-
-                    null
-                }
+                {this.state.notifOpen ? this.setUserView() : this.state.toggleInfo ? this.mechanicDetailsView() : null}
 
             </View>
         );

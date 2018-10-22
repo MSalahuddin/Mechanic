@@ -93,15 +93,16 @@ const pushReq = (userId, id, token)=>{
     console.log(id)
     console.log(token,']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')
     return new Promise((resolve, reject)=>{
-        db.collection('users').doc(userId).collection('pushReq').doc(id).set({
-            mechanicId: id,
-            userId:userId,
-            message: "Someone calling you",
-            createdAt: Date.now(),
-            token: token,
-        })
+        db.collection('users').doc(userId).collection('pushReq').add({
+                mechanicId: id,
+                userId:userId,
+                message: "Someone calling you",
+                createdAt: Date.now(),
+                token: token,
+
+            })
             .then((res)=>{
-                resolve('your request send successfully');
+                resolve(res);
             })
             .catch((err)=>{
                 console.log(err,'---------------------')
@@ -140,6 +141,37 @@ const updateProfile = (userId, params) => {
 
 };
 
+const upateMechaincJobs = (jobId, mechanicId) => {
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(mechanicId).update({jobs: jobId})
+        .then((res) => {
+            resolve(res)
+        })
+    });
+};
+
+const getMechanicData = (userId) => {
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(userId).get()
+        .then(snapshot => {
+            resolve(snapshot.data())
+        })
+    })
+}
+
+const acceptJobReq = (jobId, userId) => {
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').add({
+            JobStatus: 'Accept'
+        })
+        .then((res) => {
+            resolve(res);
+        })
+        .catch((err) => {
+            reject(err);
+        })
+    })
+}
 export {
     loginUser,
     signUp,
@@ -149,5 +181,8 @@ export {
     SetPosition,
     pushReq,
     uploadImage,
-    updateProfile
+    updateProfile,
+    upateMechaincJobs,
+    getMechanicData,
+    acceptJobReq
 }
