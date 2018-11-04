@@ -88,10 +88,8 @@ const SetPosition = (userId, latitude, longitude)=>{
     })
 };
 
-const pushReq = (userId, id, token)=>{
-    console.log(userId)
-    console.log(id)
-    console.log(token,']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')
+const pushReq = (user, id, token)=>{
+    const userId = user.id;
     return new Promise((resolve, reject)=>{
         db.collection('users').doc(userId).collection('pushReq').add({
                 mechanicId: id,
@@ -141,11 +139,11 @@ const updateProfile = (userId, params) => {
 
 };
 
-const upateMechaincJobs = (jobId, mechanicId) => {
+const upateMechaincJobs = (jobId, mechanicId, updateStatusId) => {
     return new Promise((resolve, reject) => {
-        db.collection('users').doc(mechanicId).update({jobs: jobId})
-        .then((res) => {
-            resolve(res)
+        db.collection('users').doc(mechanicId).update({jobs: jobId, jobStatusId: updateStatusId})
+        .then(snapshot => {
+            resolve('Update successfully')
         })
     });
 };
@@ -159,10 +157,18 @@ const getMechanicData = (userId) => {
     })
 }
 
-const acceptJobReq = (jobId, userId) => {
+const createJobReq = (jobId, userId) => {
     return new Promise((resolve, reject) => {
         db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').add({
-            JobStatus: 'Accept'
+            jobStatus: 'pending',
+            userLoc: {
+                latitude: '',
+                longitude: ''
+            },
+            mechanicLoc: {
+                latitude: '',
+                longitude: ''
+            }
         })
         .then((res) => {
             resolve(res);
@@ -170,6 +176,29 @@ const acceptJobReq = (jobId, userId) => {
         .catch((err) => {
             reject(err);
         })
+    })
+}
+const acceptJobReq = (currentJob, notificationData, user) => {
+    console.log(user,'lllllllllllllllllll9999999999999999000000000000')
+    const userId = notificationData.id;
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(userId).collection('pushReq').doc(currentJob.jobId).collection('jobStatus').doc(currentJob.jobStatusId).update({
+                jobStatus: 'Accept',
+                userLoc: {
+                    latitude: notificationData.coordinates.latitude,
+                    longitude: notificationData.coordinates.longitude
+                },
+                mechanicLoc: {
+                    latitude: user.latitude,
+                    longitude:user.longitude
+                }
+            })
+            .then((res) => {
+                resolve('Job Accepted Successfully');
+            })
+            .catch((err) => {
+                reject(err);
+            })
     })
 }
 export {
@@ -184,5 +213,6 @@ export {
     updateProfile,
     upateMechaincJobs,
     getMechanicData,
-    acceptJobReq
+    acceptJobReq,
+    createJobReq
 }

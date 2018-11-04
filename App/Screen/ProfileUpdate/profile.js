@@ -27,6 +27,7 @@ class Profile extends Component{
             isMechanic: this.props.user.isMechanic,
             sendCode: false,
             confirmResult:null,
+            selectedItems: []
         };
         this._onOpenActionSheet = this.onOpenActionSheet.bind(this);
 
@@ -168,12 +169,11 @@ class Profile extends Component{
                                             </TouchableOpacity>
                                         </View>
                                         <View style={Styles.formMain}>
-
-                                            <View>
-                                                {this.inputFields()}
-                                            </View>
-
-
+                                            <ScrollView>
+                                                <View>
+                                                    {this.inputFields()}
+                                                </View>
+                                            </ScrollView>
                                         </View>
                                         <View style={Styles.footerMain}>
                                             <TouchableOpacity onPress={()=>{this.updateProfile()}}
@@ -186,7 +186,7 @@ class Profile extends Component{
                                             <TouchableOpacity
                                                 onPress={() => this.props.navigation.navigate("UpdatePassword", {screen: "UpdatePassword"})}
                                                 style={Styles.btn2}>
-                                                <Text style={Styles.footerText}>For password update</Text>
+                                                <Text style={Styles.footerText}>For vehicles update</Text>
                                             </TouchableOpacity>
                                         </View>
                                     </View>

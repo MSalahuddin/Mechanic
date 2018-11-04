@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq, createJobReq} from './../../Config/Firebase'
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
@@ -17,6 +17,12 @@ import MapViewDirections from 'react-native-maps-directions';
 import { Container, Header, Content, Card, CardItem, Body, Button} from "native-base";
 import {BoxShadow} from 'react-native-shadow'
 import _ from 'underscore';
+var foursquare = require('react-native-foursquare-api')({
+    clientID: '224RPKIX35NN0ZUBWZDK5RAUOTPCVGQBQBEVN5WYMRP5RCGQ',
+    clientSecret: '55YHEWUZLM2LGM44QVL3IHUAENYVD4QMVGC2ZFMEIARZAZUX',
+    style: 'foursquare', // default: 'foursquare'
+    version: '20140806' //  default: '20140806'
+});
 
 const {height, width} = Dimensions.get('window');
 
@@ -52,11 +58,19 @@ class MapScreen extends Component{
         this.getMechanicAndUser();
         this.setAsyncData();
     }
+
+    componentDidMount() {
+        this.watchPosition();
+        this.onNotificationOpen();
+        this.foregroundNotificationListner();
+    }
+
     async setAsyncData(){
         let user = this.props.user;
         let userr = JSON.stringify(user);
         await AsyncStorage.setItem('user', userr);
     }
+
     async setToken(token){
         let userId = this.props.user.id;
         let res = await setDeviceToken(userId, token);
@@ -71,6 +85,20 @@ class MapScreen extends Component{
     }
 
     async setPosition(latitude, longitude){
+        var params = {
+            "ll": `${latitude},${longitude}`,
+            "query": 'urdu'
+        };
+        console.log(params,'kkkkkkkkkkkkkkkkkkkkkkk')
+        console.log(longitude,'..........////////////bbbbbbbbbbbbbb')
+        console.log(latitude,'..........////////////bbbbbbbbbbbbbb')
+        foursquare.venues.getVenues(params)
+            .then(function(venues) {
+                console.log(venues,'vvvvvvvvvvvvvvvvvvvvvvvvv');
+            })
+            .catch(function(err){
+                console.log(err,'eeeeeeeeeeeeeeee');
+            });
         let userId = this.props.user.id;
         let res = await SetPosition(userId, latitude, longitude);
     }
@@ -109,9 +137,30 @@ class MapScreen extends Component{
         this.setState({onlineMecahics: onlineMechanic, allMechanics: mechanic, markers: markers})
     }
 
+    foregroundNotificationListner(){
+        this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
+            console.log(notification,'nnnnnnnnnnnnnnnnnnnnnnn')
+            const jobData = notification._data;
+            const user = this.props.user;
+            const destinationLogitude = parseFloat(jobData.longitude);
+            const destinationLatitude = parseFloat(jobData.latitude);
+            const origin = {latitude: 24.87217, longitude: 67.3529129};
+            const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
+            const obj = {
+                coordinates: {latitude: destinationLatitude , longitude: destinationLogitude},
+                name: jobData.name,
+                id: jobData.id,
+                phoneNo: jobData.phoneNo,
+                profilePicture: jobData.profilePicture
+            }
 
-    componentDidMount() {
-       this.watchPosition();
+            notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination},()=>{
+                this.setUserView()
+            })
+            console.log(jobData,'dsdddddddddddddddddddddddddddddddd')
+        });
+    }
+    onNotificationOpen(){
         this.notificationOpenedListener = firebase.notifications().onNotificationOpened((notificationOpen: NotificationOpen) => {
             // Get the action triggered by the notification being opened
             const action = notificationOpen.action;
@@ -132,15 +181,15 @@ class MapScreen extends Component{
                 coordinates: {latitude: destinationLatitude , longitude: destinationLogitude},
                 name: jobData.name,
                 id: jobData.id,
-                phoneNo: jobData.phoneNo
-                }
+                phoneNo: jobData.phoneNo,
+                profilePicture: jobData.profilePicture
+            }
 
             notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination},()=>{
                 this.setUserView()
             })
         });
     }
-
     watchPosition(){
         this.watchID = navigator.geolocation.watchPosition(
             position => {
@@ -183,16 +232,24 @@ class MapScreen extends Component{
     }
 
     async pushRequest(){
-        const  {mechanicDetails} = this.state;
-        let userId = this.props.user.id;
-        let res = await pushReq(userId, mechanicDetails.id, mechanicDetails.token);
+        console.log('oooooooooooooooooooooo')
+        const  {mechanicDetails, user} = this.state;
+        let res = await pushReq(user, mechanicDetails.id, mechanicDetails.token);
         if(res.id){
             Alert.alert('','Your job send successfully');
 
             let jobs = [];
+            let obj = {};
+            let updateStatusRes = await createJobReq(res.id, user.id);
+            console.log(updateStatusRes.id,'///////////////')
             jobs = mechanicDetails.jobs;
-            jobs.push(res.id)
-            let ress = await upateMechaincJobs(jobs, mechanicDetails.id);
+            obj.jobId = res.id;
+            obj.jobStatusId = updateStatusRes.id;
+            jobs.push(obj);
+            let ress = await upateMechaincJobs(jobs, mechanicDetails.id, updateStatusRes.id);
+            console.log(ress,'bbbbbbbbbbbbbbbbbbbbbbbbbbbb')
+
+
         }
         this.setState({toggleInfo: false})
     }
@@ -206,9 +263,16 @@ class MapScreen extends Component{
         console.log(currentJob,'/////////////////////////')
         console.log(jobs,'sssssssssssssssssssssssss')
         console.log(res,';;;;;;;;;;;;;;;;')
-        let updateStatusRes = await acceptJobReq(currentJob, jobNotif.id);
-        console.log(updateStatusRes,'llllllllllllllllllllllllllllllllll')
+        let updateStatusRes = await acceptJobReq(currentJob, jobNotif, user);
 
+        if(updateStatusRes == 'Job Accepted Successfully'){
+            Alert.alert(updateStatusRes)
+        }
+        else{
+            Alert.alert("Something went wrong")
+        }
+        this.setState({notifOpen: false})
+        console.log(updateStatusRes,'llllllllllllllllllllllllllllllllll')
     }
 
     setUserView(){
@@ -232,10 +296,14 @@ class MapScreen extends Component{
                                 <View style = {{width: width, height: height * 0.13, flexDirection: 'row'}}>
                                     <View style = {{width: width * 0.4, justifyContent: 'center', alignItems: 'center'}}>
                                         <View style = {{width: width * 0.15, height: width * 0.15, borderRadius: 100}}>
-                                            <Image source = {require('./../../Images/profile.png')} style = {{width: width * 0.12, height: width * 0.12}}/>
+                                            {jobNotif.profilePicture ?
+                                                <Image source = {{uri: jobNotif.profilePicture}} style = {{ borderRadius: 100, width: width * 0.12, height: width * 0.12}}/>:
+                                                <Image source = {require('./../../Images/profile.png')} style = {{width: width * 0.12, height: width * 0.12}}/>
+
+                                            }
                                         </View>
                                         <View style = {{width: width * 0.4}}>
-                                            <Text style = {{fontSize: 14, fontWeight: 'bold', marginLeft: width * 0.1}}>{jobNotif.name}</Text>
+                                            <Text style = {{fontSize: 14, fontWeight: 'bold', marginLeft: width * 0.06}}>{jobNotif.name}</Text>
                                         </View>
                                     </View>
                                     <View style={{width: width* 0.003, height: height* 0.11, backgroundColor: '#b7b7b7', marginTop: height* 0.012}}>

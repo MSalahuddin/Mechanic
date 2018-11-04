@@ -72,7 +72,7 @@ const Styles = {
         borderRadius:100
     },
     formMain:{
-        flex:1,
+        height: height * 0.45,
         width:width,
         alignItems:'center'
     },
