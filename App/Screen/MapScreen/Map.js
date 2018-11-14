@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq, createJobReq} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq, createJobReq, JobReqRes, CalDistance} from './../../Config/Firebase'
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
@@ -17,6 +17,9 @@ import MapViewDirections from 'react-native-maps-directions';
 import { Container, Header, Content, Card, CardItem, Body, Button} from "native-base";
 import {BoxShadow} from 'react-native-shadow'
 import _ from 'underscore';
+
+const db = firebase.firestore();
+
 var foursquare = require('react-native-foursquare-api')({
     clientID: '224RPKIX35NN0ZUBWZDK5RAUOTPCVGQBQBEVN5WYMRP5RCGQ',
     clientSecret: '55YHEWUZLM2LGM44QVL3IHUAENYVD4QMVGC2ZFMEIARZAZUX',
@@ -46,11 +49,14 @@ class MapScreen extends Component{
             jobNotif: '',
             notifOpen: false,
             distOrigin: '',
-            distDestination: ''
+            distDestination: '',
+            calDist: 0,
+            calDistTime: "00:00:00"
 
         }
         this.getDeviceToken = this.getDeviceToken.bind(this);
         this.getMechanicAndUser = this.getMechanicAndUser.bind(this);
+        this.JobReqResponse = this.JobReqResponse.bind(this);
     }
 
     componentWillMount(){
@@ -89,15 +95,11 @@ class MapScreen extends Component{
             "ll": `${latitude},${longitude}`,
             "query": 'urdu'
         };
-        console.log(params,'kkkkkkkkkkkkkkkkkkkkkkk')
-        console.log(longitude,'..........////////////bbbbbbbbbbbbbb')
-        console.log(latitude,'..........////////////bbbbbbbbbbbbbb')
+
         foursquare.venues.getVenues(params)
             .then(function(venues) {
-                console.log(venues,'vvvvvvvvvvvvvvvvvvvvvvvvv');
             })
             .catch(function(err){
-                console.log(err,'eeeeeeeeeeeeeeee');
             });
         let userId = this.props.user.id;
         let res = await SetPosition(userId, latitude, longitude);
@@ -117,9 +119,9 @@ class MapScreen extends Component{
 
         let markers = [];
         mechanic.map((mech)=>{
-            console.log(mech,'////////////////////////////................')
             if(mech.deviceToken){
                 onlineMechanic.push(mech);
+
                 let obj = {};
                 obj.coordinates = {latitude: mech.latitude , longitude: mech.longitude};
                 obj.name = mech.firstName + " " + mech.lastName;
@@ -132,14 +134,12 @@ class MapScreen extends Component{
                 markers.push(obj);
             }
         });
-        console.log(markers,'sssssssssssssmmmmmmmmmmmmm')
         markers.push(userObj);
         this.setState({onlineMecahics: onlineMechanic, allMechanics: mechanic, markers: markers})
     }
 
     foregroundNotificationListner(){
         this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
-            console.log(notification,'nnnnnnnnnnnnnnnnnnnnnnn')
             const jobData = notification._data;
             const user = this.props.user;
             const destinationLogitude = parseFloat(jobData.longitude);
@@ -157,7 +157,6 @@ class MapScreen extends Component{
             notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination},()=>{
                 this.setUserView()
             })
-            console.log(jobData,'dsdddddddddddddddddddddddddddddddd')
         });
     }
     onNotificationOpen(){
@@ -168,12 +167,8 @@ class MapScreen extends Component{
             const notification: Notification = notificationOpen.notification;
             const jobData = notification._data;
             const user = this.props.user;
-            console.log(this.state.user,'uuuuuuuuuuuuuuiiiiiiiiiiiiiiiiii')
-            console.log(jobData,'dsdddddddddddddddddddddddddddddddd')
             const destinationLogitude = parseFloat(jobData.longitude);
             const destinationLatitude = parseFloat(jobData.latitude);
-            console.log(destinationLatitude)
-            console.log(destinationLogitude,'.......................................')
 
             const origin = {latitude: 24.87217, longitude: 67.3529129};
             const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
@@ -225,14 +220,21 @@ class MapScreen extends Component{
         return haversine(prevLatLng, newLatLng) || 0;
     };
 
-    details(marker){
-        console.log(marker,'sssssssssssssssppppppppppppppppppppppppp')
+    async details(marker){
+        let user = this.props.user;
+        let userLang = user.longitude;
+        let userLat = user.latitude;
+        let mecLang = marker.coordinates.longitude;
+        let machLat = marker.coordinates.latitude;
+        let res = await CalDistance(mecLang, machLat, userLang, userLat);
+        let calDist = res.route.distance;
+        let calDistTime = res.route.formattedTime;
+        console.log(res.route,'//////////////////////')
         this.setState({toggleInfo: true});
-        this.setState({mechanicDetails: marker})
+        this.setState({mechanicDetails: marker, calDist, calDistTime})
     }
 
     async pushRequest(){
-        console.log('oooooooooooooooooooooo')
         const  {mechanicDetails, user} = this.state;
         let res = await pushReq(user, mechanicDetails.id, mechanicDetails.token);
         if(res.id){
@@ -241,28 +243,33 @@ class MapScreen extends Component{
             let jobs = [];
             let obj = {};
             let updateStatusRes = await createJobReq(res.id, user.id);
-            console.log(updateStatusRes.id,'///////////////')
             jobs = mechanicDetails.jobs;
             obj.jobId = res.id;
             obj.jobStatusId = updateStatusRes.id;
             jobs.push(obj);
             let ress = await upateMechaincJobs(jobs, mechanicDetails.id, updateStatusRes.id);
-            console.log(ress,'bbbbbbbbbbbbbbbbbbbbbbbbbbbb')
-
+            this.JobReqResponse(res.id, user.id, updateStatusRes.id);
 
         }
         this.setState({toggleInfo: false})
     }
 
+    JobReqResponse(jobId, userId, statusId){
+        let data = {}
+        db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').doc(statusId)
+            .onSnapshot(function(doc) {
+                if(doc.data().jobStatus == "Accept"){
+                    console.log("current Data Avvvvv ",doc.data())
+                }
+                console.log("current Data",doc.data())
+            });
+    }
     async acceptJob(){
         const {user, jobNotif} = this.state;
         const res = await getMechanicData(user.id);
         const jobs = res.jobs;
         const currentJob = _.last(jobs);
-        console.log(jobNotif,'skkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk')
-        console.log(currentJob,'/////////////////////////')
-        console.log(jobs,'sssssssssssssssssssssssss')
-        console.log(res,';;;;;;;;;;;;;;;;')
+
         let updateStatusRes = await acceptJobReq(currentJob, jobNotif, user);
 
         if(updateStatusRes == 'Job Accepted Successfully'){
@@ -272,7 +279,6 @@ class MapScreen extends Component{
             Alert.alert("Something went wrong")
         }
         this.setState({notifOpen: false})
-        console.log(updateStatusRes,'llllllllllllllllllllllllllllllllll')
     }
 
     setUserView(){
@@ -373,18 +379,18 @@ class MapScreen extends Component{
                     </View>
                     <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
                         <View style = {{width: width * 0.35, height: height * 0.05}}>
-                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Phone no:</Text>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Distane:</Text>
                         </View>
                         <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
-                            <Text style={{color: '#11397a'}}>+923062691335</Text>
+                            <Text style={{color: '#11397a'}}>{this.state.calDist} Km</Text>
                         </View>
                     </View>
                     <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
                         <View style = {{width: width * 0.35, height: height * 0.05}}>
-                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Phone no:</Text>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Reaching Time:</Text>
                         </View>
                         <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
-                            <Text style={{color: '#11397a'}}>+923062691335</Text>
+                            <Text style={{color: '#11397a'}}>{this.state.calDistTime}</Text>
                         </View>
                     </View>
                 </View>
@@ -440,6 +446,7 @@ class MapScreen extends Component{
                         })
                         :
                         this.state.markers.map(marker => (
+
                             marker.coordinates ?
                                 marker.id == this.state.user.id ?
                                     <MapView.Marker

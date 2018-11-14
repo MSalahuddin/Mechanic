@@ -3,7 +3,7 @@ import {View, Text, Dimensions, Image, TouchableOpacity,TextInput,ActivityIndica
 import Styles from './Styles'
 import { TextField } from 'react-native-material-textfield';
 import SectionedMultiSelect from 'react-native-sectioned-multi-select';
-
+import {updateVehicles} from './../../Config/Firebase'
 const {width, height} = Dimensions.get('window');
 
 const items = [
@@ -11,57 +11,57 @@ const items = [
         name: "Suzuki",
         id: 0,
         children: [{
-            name: "Apple",
-            id: 10,
+            name: "Mehran",
+            id: "Mehran",
         },{
-            name: "Strawberry",
-            id: 17,
+            name: "Cultus",
+            id: "Cultus",
         },{
-            name: "Pineapple",
-            id: 13,
+            name: "Wagon R",
+            id: "Wagon R",
         },{
-            name: "Banana",
-            id: 14,
+            name: "APV",
+            id: "APV",
         },{
-            name: "Watermelon",
-            id: 15,
+            name: "Bolan",
+            id: "Bolan",
         },{
-            name: "Kiwi fruit",
-            id: 16,
+            name: "Jimny",
+            id: "Jimny",
         }]
     },
     {
-        name: "Gems",
-        id: 1,
+        name: "Honda",
+        id: "Honda",
         children: [{
-            name: "Quartz",
-            id: 20,
+            name: "Civic",
+            id: "Civic",
         },{
-            name: "Zircon",
-            id: 21,
+            name: "Accord",
+            id: "Accord",
         },{
-            name: "Sapphire",
-            id: 22,
+            name: "City",
+            id: "City",
         },{
-            name: "Topaz",
-            id: 23,
+            name: "BR-V",
+            id: "BR-V",
         }]
     },
     {
-        name: "Plants",
+        name: "Toyota",
         id: 2,
         children: [{
-            name: "Mother In Law\'s Tongue",
-            id: 30,
+            name: "Corolla",
+            id: "Corolla",
         },{
-            name: "Yucca",
-            id: 31,
+            name: "Fortuner",
+            id: "Fortuner",
         },{
-            name: "Monsteria",
-            id: 32,
+            name: "Hiace",
+            id: "Hiace",
         },{
-            name: "Palm",
-            id: 33,
+            name: "Hilux",
+            id: "Hilux",
         }]
     },
 ]
@@ -71,50 +71,25 @@ export default class UpdatePassword extends Component{
     constructor(props){
         super(props);
         this.state = {
-            OldPassword: '',
-            NewPassword: '',
-            ReType: '',
-            loader : false
+            loader : false,
+            user: this.props.navigation.getParam('user'),
+            selectedItems: []
         };
-
-    }
-
-    validate() {
-        const {OldPassword, NewPassword,ReType} = this.state;
-        if (!OldPassword || !NewPassword ) {
-            Alert.alert('','Enter All Fields.');
-            return false;
-        } else if (NewPassword.length < 8) {
-            Alert.alert('','Minimum length of password field is 8 characters');
-            return false;
-        } else if (NewPassword.length > 16) {
-            Alert.alert('','Maximum length of password field is 16 characters');
-            return false;
-        }
-        else if (NewPassword != ReType) {
-            Alert.alert('','Passwords do not match.');
-            return false;
-        }
-        return true;
-    }
-
-    async updatePassword() {
-
-        const {OldPassword, NewPassword, ReType} = this.state;
-        if (this.validate()) {
-            try {
-                this.setState({loader: true});
-                await updatePassword(OldPassword, NewPassword);
-                this.setState({loader : false , OldPassword : '', NewPassword : '', ReType : ''})
-            } catch (e) {
-                this.setState({loader : false});
-                Alert.alert('', e.error)
-            }
-        }
+        this.updateVehicles = this.updateVehicles.bind(this);
     }
 
     onSelectedItemsChange = (selectedItems) => {
         this.setState({ selectedItems });
+    }
+
+    async updateVehicles(){
+        const {selectedItems, user} = this.state;
+        this.setState({loader: true});
+        const res = await updateVehicles(user.id, selectedItems);
+        if(res == "Vehicles updated"){
+            this.setState({loader: false});
+            Alert.alert('','Vehicles Updated')
+        }
     }
 
     render(){
@@ -153,6 +128,14 @@ export default class UpdatePassword extends Component{
                         />
 
                     </View>
+                <View style={{flex:0.2, alignItems:'center', justifyContent:'center', marginTop: height * 0.3}}>
+                    <TouchableOpacity
+                        onPress={()=>{this.updateVehicles()}}
+                        style={Styles.btn}>
+                        {this.state.loader ? <ActivityIndicator size="small" color="#0000ff"/> :
+                            <Text style={Styles.btnText}>Update Vehicles</Text>}
+                    </TouchableOpacity>
+                </View>
             </View>
         )
     }

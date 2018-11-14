@@ -201,6 +201,46 @@ const acceptJobReq = (currentJob, notificationData, user) => {
             })
     })
 }
+
+const JobReqRes = (jobId, userId, statusId) => {
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').doc(statusId)
+            .onSnapshot(function(doc) {
+                resolve(doc.data())
+
+            });
+
+    })
+}
+const CalDistance = ((mecLang, machLat, userLang, userLat) => {
+    let apiKey = 'gakuxByYEFeTnvwsASJ0acSgMovLmPm5';
+    let dummyLang = 67.350338;
+    let dummyLat = 24.8731142;
+    return new Promise((resolve, reject) => {
+        fetch(`https://www.mapquestapi.com/directions/v2/route?key=${apiKey}&from=${userLat},${userLang}&to=${machLat},${mecLang}&outFormat=json&ambiguities=ignore&routeType=bicycle&doReverseGeocode=false&enhancedNarrative=false&avoidTimedConditions=false`)
+        .then((response) => {
+            return response.json();
+        })
+        .then((res) => {
+            resolve(res)
+        })
+    })
+})
+
+const updateVehicles = (id, vehicles) => {
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(id).update({
+            vehicles: vehicles
+        })
+        .then((res) => {
+            resolve("Vehicles updated")
+        })
+        .catch((err) => {
+            reject(err)
+        })
+    })
+}
+
 export {
     loginUser,
     signUp,
@@ -214,5 +254,8 @@ export {
     upateMechaincJobs,
     getMechanicData,
     acceptJobReq,
-    createJobReq
+    createJobReq,
+    JobReqRes,
+    CalDistance,
+    updateVehicles
 }

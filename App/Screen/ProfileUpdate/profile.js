@@ -184,7 +184,7 @@ class Profile extends Component{
                                         </View>
                                         <View style={Styles.footerMain}>
                                             <TouchableOpacity
-                                                onPress={() => this.props.navigation.navigate("UpdatePassword", {screen: "UpdatePassword"})}
+                                                onPress={() => this.props.navigation.navigate("UpdatePassword", {screen: "UpdatePassword", user: this.props.user})}
                                                 style={Styles.btn2}>
                                                 <Text style={Styles.footerText}>For vehicles update</Text>
                                             </TouchableOpacity>
