@@ -51,12 +51,14 @@ class MapScreen extends Component{
             distOrigin: '',
             distDestination: '',
             calDist: 0,
-            calDistTime: "00:00:00"
+            calDistTime: "00:00:00",
+            jobAccepted: false
 
         }
         this.getDeviceToken = this.getDeviceToken.bind(this);
         this.getMechanicAndUser = this.getMechanicAndUser.bind(this);
         this.JobReqResponse = this.JobReqResponse.bind(this);
+        this.updateMap = this.updateMap.bind(this);
     }
 
     componentWillMount(){
@@ -200,8 +202,6 @@ class MapScreen extends Component{
                     latitude,
                     longitude,
                     routeCoordinates: routeCoordinates.concat([newCoordinate]),
-                    distanceTravelled:
-                    distanceTravelled + this.calcDistance(newCoordinate),
                     prevLatLng: newCoordinate,
                     locSet: true
                 },()=>{
@@ -213,11 +213,6 @@ class MapScreen extends Component{
             error => console.log(error),
             { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
         );
-    }
-
-    calcDistance = newLatLng => {
-        const { prevLatLng } = this.state;
-        return haversine(prevLatLng, newLatLng) || 0;
     };
 
     async details(marker){
@@ -229,7 +224,6 @@ class MapScreen extends Component{
         let res = await CalDistance(mecLang, machLat, userLang, userLat);
         let calDist = res.route.distance;
         let calDistTime = res.route.formattedTime;
-        console.log(res.route,'//////////////////////')
         this.setState({toggleInfo: true});
         this.setState({mechanicDetails: marker, calDist, calDistTime})
     }
@@ -257,13 +251,22 @@ class MapScreen extends Component{
     JobReqResponse(jobId, userId, statusId){
         let data = {}
         db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').doc(statusId)
-            .onSnapshot(function(doc) {
+            .onSnapshot((doc) => {
                 if(doc.data().jobStatus == "Accept"){
-                    console.log("current Data Avvvvv ",doc.data())
+                    this.updateMap(doc.data());
+
                 }
-                console.log("current Data",doc.data())
             });
     }
+
+    updateMap(data){
+        const destinationLogitude = parseFloat(data.mechanicLoc.longitude);
+        const destinationLatitude = parseFloat(data.mechanicLoc.latitude);
+        const origin = {latitude: 24.87217, longitude: 67.3529129};
+        const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
+        this.setState({distOrigin: origin, distDestination: destination, jobAccepted: true})
+    }
+
     async acceptJob(){
         const {user, jobNotif} = this.state;
         const res = await getMechanicData(user.id);
@@ -273,6 +276,7 @@ class MapScreen extends Component{
         let updateStatusRes = await acceptJobReq(currentJob, jobNotif, user);
 
         if(updateStatusRes == 'Job Accepted Successfully'){
+            this.setState({jobAccepted: true})
             Alert.alert(updateStatusRes)
         }
         else{
@@ -420,7 +424,7 @@ class MapScreen extends Component{
                         latitudeDelta: 0.015,
                         longitudeDelta: 0.0121}}
                 >
-                    {this.state.notifOpen ?
+                    {this.state.jobAccepted ?
                         <MapViewDirections
                             origin={this.state.distOrigin}
                             destination={this.state.distDestination}
