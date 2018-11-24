@@ -36,10 +36,11 @@ const signUp = (phoneNo) => {
 const filterMechanic = ()=>{
     return new Promise((resolve, reject) =>{
         db.collection('users').get()
-            .then(snapshot => {
+            .then(onSnapshot => {
                 let user = [];
-                snapshot.forEach(function(doc) {
+                onSnapshot.forEach(function(doc) {
                     if (doc.exists) {
+
                         if(doc.data().isMechanic){
                             user.push(doc.data());
                         }
@@ -179,7 +180,6 @@ const createJobReq = (jobId, userId) => {
     })
 }
 const acceptJobReq = (currentJob, notificationData, user) => {
-    console.log(user,'lllllllllllllllllll9999999999999999000000000000')
     const userId = notificationData.id;
     return new Promise((resolve, reject) => {
         db.collection('users').doc(userId).collection('pushReq').doc(currentJob.jobId).collection('jobStatus').doc(currentJob.jobStatusId).update({
@@ -240,6 +240,28 @@ const updateVehicles = (id, vehicles) => {
         })
     })
 }
+//const updateLocation = (jobId, jobStatusId, userId, latitude, longitude) => {
+//    return new Promise((resolve, reject) => {
+//        db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').doc(jobStatusId).collection('positionss').add({
+//            latitude: latitude,
+//            longitude: longitude
+//        })
+//        .then((res) => {
+//            resolve(res)
+//        })
+//    })
+//}
+
+const updateUserId = (id, userId) => {
+    return new Promise((resolve, reject) => {
+        db.collection('users').doc(id).update({
+            jobReqId: userId
+        })
+        .then((res) => {
+            resolve(res)
+        })
+    })
+}
 
 export {
     loginUser,
@@ -257,5 +279,6 @@ export {
     createJobReq,
     JobReqRes,
     CalDistance,
-    updateVehicles
+    updateVehicles,
+    updateUserId
 }

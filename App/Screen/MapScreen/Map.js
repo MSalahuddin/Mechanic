@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
-import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq, createJobReq, JobReqRes, CalDistance} from './../../Config/Firebase'
+import {filterMechanic, setDeviceToken, SetPosition, pushReq, upateMechaincJobs, getMechanicData, acceptJobReq, createJobReq, JobReqRes, CalDistance, updateUserId} from './../../Config/Firebase'
 import firebase from 'react-native-firebase';
 import Styles from './Styles'
 const haversine = require('haversine')
@@ -52,18 +52,26 @@ class MapScreen extends Component{
             distDestination: '',
             calDist: 0,
             calDistTime: "00:00:00",
-            jobAccepted: false
+            jobAccepted: false,
+            jobId: '',
+            jobStatusId: '',
+            userId: ''
 
         }
         this.getDeviceToken = this.getDeviceToken.bind(this);
         this.getMechanicAndUser = this.getMechanicAndUser.bind(this);
         this.JobReqResponse = this.JobReqResponse.bind(this);
-        this.updateMap = this.updateMap.bind(this);
+        //this.updateMap = this.updateMap.bind(this);
+        this.jobMapView = this.jobMapView.bind(this);
+        this.updateMapLocation = this.updateMapLocation.bind(this);
     }
 
     componentWillMount(){
         this.getDeviceToken();
         this.getMechanicAndUser();
+        setInterval(() => {
+            this.getMechanicAndUser();
+        },100000);
         this.setAsyncData();
     }
 
@@ -105,9 +113,20 @@ class MapScreen extends Component{
             });
         let userId = this.props.user.id;
         let res = await SetPosition(userId, latitude, longitude);
+        //if(this.state.jobAccepted){
+        //    console.log("Acceptedddddddddddddddddddddddddddd")
+        //    const  {jobId, jobStatusId, user, userId} = this. state;
+        //    if(this.state.user.isMechanic){
+        //        let ress = await updateLocation(jobId, jobStatusId, userId, latitude, longitude);
+        //    }
+        //    else{
+        //        let ress = await updateLocation(jobId, jobStatusId, user.id, latitude, longitude);
+        //    }
+        //}
     }
 
     async getMechanicAndUser(){
+        console.log('hellllllllllllllllllllllllllllll')
         const mechanic = await filterMechanic();
         const onlineMechanic = [];
         const user = this.props.user;
@@ -187,6 +206,7 @@ class MapScreen extends Component{
             })
         });
     }
+
     watchPosition(){
         this.watchID = navigator.geolocation.watchPosition(
             position => {
@@ -243,40 +263,56 @@ class MapScreen extends Component{
             jobs.push(obj);
             let ress = await upateMechaincJobs(jobs, mechanicDetails.id, updateStatusRes.id);
             this.JobReqResponse(res.id, user.id, updateStatusRes.id);
-
+            this.setState({toggleInfo: false, jobId: res.id, jobStatusId: updateStatusRes.id});
         }
-        this.setState({toggleInfo: false})
     }
 
-    JobReqResponse(jobId, userId, statusId){
+     JobReqResponse(jobId, userId, statusId){
         let data = {}
         db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').doc(statusId)
-            .onSnapshot((doc) => {
+            .onSnapshot(async (doc) => {
                 if(doc.data().jobStatus == "Accept"){
-                    this.updateMap(doc.data());
-
+                    let updateuserId = await updateUserId(userId, this.state.mechanicDetails.id);
+                    //this.updateMap(doc.data());
+                    this.updateMapLocation();
                 }
             });
     }
 
-    updateMap(data){
-        const destinationLogitude = parseFloat(data.mechanicLoc.longitude);
-        const destinationLatitude = parseFloat(data.mechanicLoc.latitude);
-        const origin = {latitude: 24.87217, longitude: 67.3529129};
-        const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
-        this.setState({distOrigin: origin, distDestination: destination, jobAccepted: true})
+    updateMapLocation(){
+        const {user} = this.state;
+        db.collection('users').doc(user.id)
+        .onSnapshot((doc) => {
+            const origin = {latitude: 24.87217, longitude: 67.3529129};
+
+            db.collection('users').doc(doc.data().jobReqId)
+            .onSnapshot((doc) => {
+                const destinationLogitude = parseFloat(doc.data().longitude);
+                const destinationLatitude = parseFloat(doc.data().latitude);
+                const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
+                this.setState({distOrigin: origin, distDestination: destination, jobAccepted: true})
+            })
+        })
     }
+
+    //updateMap(data){
+    //    const destinationLogitude = parseFloat(data.mechanicLoc.longitude);
+    //    const destinationLatitude = parseFloat(data.mechanicLoc.latitude);
+    //    const origin = {latitude: 24.87217, longitude: 67.3529129};
+    //    const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
+    //    this.setState({distOrigin: origin, distDestination: destination, jobAccepted: true})
+    //}
 
     async acceptJob(){
         const {user, jobNotif} = this.state;
         const res = await getMechanicData(user.id);
         const jobs = res.jobs;
         const currentJob = _.last(jobs);
-
+        let updateuserId = await updateUserId(user.id, jobNotif.id);
         let updateStatusRes = await acceptJobReq(currentJob, jobNotif, user);
-
         if(updateStatusRes == 'Job Accepted Successfully'){
-            this.setState({jobAccepted: true})
+            this.updateMapLocation();
+            this.setState({jobAccepted: true, jobId: currentJob.jobId, jobStatusId: currentJob.jobStatusId, userId: jobNotif.id})
             Alert.alert(updateStatusRes)
         }
         else{
@@ -411,6 +447,7 @@ class MapScreen extends Component{
 
     mapView(){
         const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
+        var coordinates = {latitude: this.state.latitude, longitude: this.state.longitude};
         return(
             <View style = {{flex: 1}}>
                 <MapView
@@ -440,7 +477,7 @@ class MapScreen extends Component{
                             if(this.state.user.id == marker.id){
                                 return(
                                     <MapView.Marker
-                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        coordinate={marker.coordinates.latitude && coordinates}
                                         title={marker.name}
                                         description={marker.description}
                                         image={require('./../../Images/userPointer.png')}
@@ -454,7 +491,7 @@ class MapScreen extends Component{
                             marker.coordinates ?
                                 marker.id == this.state.user.id ?
                                     <MapView.Marker
-                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        coordinate={marker.coordinates.latitude && coordinates}
                                         title={marker.name}
                                         description={marker.description}
                                         image={require('./../../Images/userPointer.png')}
@@ -476,8 +513,36 @@ class MapScreen extends Component{
         )
     }
 
-    render() {
+    jobMapView(){
+        const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
+        return(
+            <View style = {{flex: 1}}>
+                <MapView
+                    style={styles.map}
+                    showUserLocation
+                    followUserLocation
+                    loadingEnabled
+                    region={{
+                        latitude: this.state.latitude,
+                        longitude: this.state.longitude,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.0121}}
+                >
 
+                        <MapViewDirections
+                            origin={this.state.distOrigin}
+                            destination={this.state.distDestination}
+                            apikey={GOOGLE_MAPS_APIKEY}
+                            strokeWidth={4}
+                            strokeColor="#0059b3"
+                        />
+                </MapView>
+            </View>
+        )
+    }
+
+    render() {
+        console.log(this.state.jobAccepted,'llllllllllllllllooooooooooooooppppppppppp')
         return (
             <View style ={{height: height, width: width}}>
                 <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
@@ -486,7 +551,7 @@ class MapScreen extends Component{
                     </TouchableOpacity>
                 </View>
                 <View style={this.state.toggleInfo || this.state.notifOpen ? {height: height * 0.89, width: width, backgroundColor:'red'}: {height: height * 0.89, width: width}}>
-                {this.state.locSet ? this.mapView() :
+                {this.state.locSet ? this.state.jobAccepted ? this.jobMapView() : this.mapView() :
 
                     <View style={{width: width, height: height, alignItems: 'center', justifyContent: 'center'}}>
                         <ActivityIndicator size="large" color="#0000ff" />
