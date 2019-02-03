@@ -263,6 +263,7 @@ class MapScreen extends Component{
             jobs.push(obj);
             let ress = await upateMechaincJobs(jobs, mechanicDetails.id, updateStatusRes.id);
             this.JobReqResponse(res.id, user.id, updateStatusRes.id);
+
             this.setState({toggleInfo: false, jobId: res.id, jobStatusId: updateStatusRes.id});
         }
     }
@@ -471,65 +472,75 @@ class MapScreen extends Component{
     }
 
     mapView(){
+        console.log('maoooooooooooooooooooooooooooooViiiiiiiiiewwwwwwwwwwwww')
         const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
         var coordinates = {latitude: this.state.latitude, longitude: this.state.longitude};
         return(
-            <View style = {{flex: 1}}>
-                <MapView
-                    style={styles.map}
-                    showUserLocation
-                    followUserLocation
-                    loadingEnabled
-                    region={{
+
+                <View style = {{flex: 1}}>
+                    <MapView
+                        style={styles.map}
+                        showUserLocation
+                        followUserLocation
+                        loadingEnabled
+                        region={{
                         latitude: this.state.latitude,
                         longitude: this.state.longitude,
                         latitudeDelta: 0.015,
                         longitudeDelta: 0.0121}}
-                >
+                    >
 
-                    {this.state.user.isMechanic ?
-                        this.state.markers.map(marker => {
+                        {this.state.user.isMechanic ?
+                            this.state.markers.map(marker => {
 
-                            if(this.state.user.id == marker.id){
-                                return(
-                                    <MapView.Marker
-                                        coordinate={coordinates}
-                                        title={marker.name}
-                                        description={marker.description}
-                                        image={require('./../../Images/userPointer.png')}
-                                    />
-                                )
-                            }
-                        })
-                        :
-                        this.state.markers.map(marker => (
+                                if(this.state.user.id == marker.id){
+                                    return(
+                                        <MapView.Marker
+                                            coordinate={coordinates}
+                                            title={marker.name}
+                                            description={marker.description}
+                                            image={require('./../../Images/userPointer.png')}
+                                        />
+                                    )
+                                }
+                            })
+                            :
+                            this.state.markers.map(marker => (
 
-                            marker.coordinates ?
-                                marker.id == this.state.user.id ?
-                                    <MapView.Marker
-                                        coordinate={coordinates}
-                                        title={marker.name}
-                                        description={marker.description}
-                                        image={require('./../../Images/userPointer.png')}
-                                    />
-                                    :
+                                marker.coordinates ?
+                                    marker.id == this.state.user.id ?
+                                        <MapView.Marker
+                                            coordinate={coordinates}
+                                            title={marker.name}
+                                            description={marker.description}
+                                            image={require('./../../Images/userPointer.png')}
+                                        />
+                                        :
 
-                                    <MapView.Marker
-                                        coordinate={marker.coordinates.latitude && marker.coordinates}
-                                        title={marker.name}
-                                        description={marker.description}
-                                        image={require('./../../Images/mechanicPointer.png')}
-                                        onPress={()=> this.details(marker)}
-                                    />: null
-                        ))
+                                        <MapView.Marker
+                                            coordinate={marker.coordinates.latitude && marker.coordinates}
+                                            title={marker.name}
+                                            description={marker.description}
+                                            image={require('./../../Images/mechanicPointer.png')}
+                                            onPress={()=> this.details(marker)}
+                                        />: null
+                            ))
+                        }
+
+                    </MapView>
+                    {
+                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {screen: "QRCodeScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
+                        <Text style = {{fontSize: 17, color: 'white'}}>Job Done</Text>
+                    </TouchableOpacity>
                     }
+                </View>
 
-                </MapView>
-            </View>
+
         )
     }
 
     jobMapView(){
+        console.log('lllllllllllllllllllllllllllllllllllllljjjjjjjjjjj')
         const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
         return(
             <View style = {{flex: 1}}>

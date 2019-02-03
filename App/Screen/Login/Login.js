@@ -51,6 +51,7 @@ class LoginScreen extends Component{
         });
     }
     async autoLogin(){
+        console.log('sssssssssssssssssssss')
         const value = await AsyncStorage.getItem('user');
         const user = JSON.parse(value);
         if(user){

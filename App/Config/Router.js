@@ -9,7 +9,7 @@ import UpdatePassword from './../Screen/ProfileUpdate/UpdatePassword'
 import { connect } from 'react-redux'
 import {signOut} from './Firebase'
 import firebase from 'react-native-firebase';
-
+import QRCodeScreen from '../Screen/QRCode/QRCode'
 
 const {width, height} = Dimensions.get('window');
 const db = firebase.firestore();
@@ -120,9 +120,11 @@ const DrawerNav = DrawerNavigator({
 }, DrawerNavigatorConfig);
 
 const Route = createStackNavigator({
+
     LoginScreen: {screen: LoginScreen},
     DrawerNav: {screen: DrawerNav},
     SignUp: {screen: SignUp},
+    QRCodeScreen: {screen: QRCodeScreen}
 
 }, {
     headerMode: 'none'
