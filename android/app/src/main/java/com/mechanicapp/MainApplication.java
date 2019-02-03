@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import io.invertase.firebase.storage.RNFirebaseStoragePackage;
 import com.horcrux.svg.SvgPackage;
+import com.showlocationservicesdialogbox.LocationServicesDialogBoxPackage;;
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -39,7 +40,8 @@ public class MainApplication extends Application implements ReactApplication {
             new RNFirebaseMessagingPackage(),
             new RNFirebaseNotificationsPackage(),
             new RNFirebaseStoragePackage(),
-            new SvgPackage()
+            new SvgPackage(),
+            new LocationServicesDialogBoxPackage()
       );
     }
 

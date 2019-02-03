@@ -272,6 +272,7 @@ class MapScreen extends Component{
         db.collection('users').doc(userId).collection('pushReq').doc(jobId).collection('jobStatus').doc(statusId)
             .onSnapshot(async (doc) => {
                 if(doc.data().jobStatus == "Accept"){
+                    Alert.alert('','Your job accepted')
                     let updateuserId = await updateUserId(userId, this.state.mechanicDetails.id);
                     //this.updateMap(doc.data());
                     this.updateMapLocation();
@@ -281,16 +282,40 @@ class MapScreen extends Component{
 
     updateMapLocation(){
         const {user} = this.state;
+        let markers = [];
         db.collection('users').doc(user.id)
         .onSnapshot((doc) => {
-            const origin = {latitude: 24.87217, longitude: 67.3529129};
-
+            const originLogitude = parseFloat(doc.data().longitude);
+            const originLatitude = parseFloat(doc.data().latitude);
+            const origin = {latitude: originLatitude, longitude: originLogitude};
+            let obj = {};
+            obj.coordinates = {latitude: doc.data().latitude , longitude: doc.data().longitude};
+            obj.name = doc.data().firstName + " " + doc.data().lastName;
+            obj.description = doc.data().description;
+            obj.id = doc.data().id;
+            obj.token = doc.data().deviceToken;
+            obj.image = doc.data().profilePicture;
+            obj.jobs = doc.data().jobs ? doc.data().jobs : [];
+            obj.phoneNo = doc.data().phoneNo;
+            obj.isMechanic = doc.data().isMechanic;
+            markers = [];
+            markers.push(obj);
             db.collection('users').doc(doc.data().jobReqId)
             .onSnapshot((doc) => {
                 const destinationLogitude = parseFloat(doc.data().longitude);
                 const destinationLatitude = parseFloat(doc.data().latitude);
                 const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
-                this.setState({distOrigin: origin, distDestination: destination, jobAccepted: true})
+                let obj1 = {};
+                obj1.coordinates = {latitude: doc.data().latitude , longitude: doc.data().longitude};
+                obj1.name = doc.data().firstName + " " + doc.data().lastName;
+                obj1.description = doc.data().description;
+                obj1.id = doc.data().id;
+                obj1.image = doc.data().profilePicture;
+                obj1.jobs = doc.data().jobs ? doc.data().jobs : [];
+                obj1.phoneNo = doc.data().phoneNo;
+                obj1.isMechanic = doc.data().isMechanic;
+                markers.push(obj1);
+                this.setState({distOrigin: origin, distDestination: destination, jobAccepted: true, markers: markers})
             })
         })
     }
@@ -461,23 +486,14 @@ class MapScreen extends Component{
                         latitudeDelta: 0.015,
                         longitudeDelta: 0.0121}}
                 >
-                    {this.state.jobAccepted ?
-                        <MapViewDirections
-                            origin={this.state.distOrigin}
-                            destination={this.state.distDestination}
-                            apikey={GOOGLE_MAPS_APIKEY}
-                            strokeWidth={4}
-                            strokeColor="#0059b3"
-                        /> :
-                        null
-                    }
+
                     {this.state.user.isMechanic ?
                         this.state.markers.map(marker => {
 
                             if(this.state.user.id == marker.id){
                                 return(
                                     <MapView.Marker
-                                        coordinate={marker.coordinates.latitude && coordinates}
+                                        coordinate={coordinates}
                                         title={marker.name}
                                         description={marker.description}
                                         image={require('./../../Images/userPointer.png')}
@@ -491,7 +507,7 @@ class MapScreen extends Component{
                             marker.coordinates ?
                                 marker.id == this.state.user.id ?
                                     <MapView.Marker
-                                        coordinate={marker.coordinates.latitude && coordinates}
+                                        coordinate={coordinates}
                                         title={marker.name}
                                         description={marker.description}
                                         image={require('./../../Images/userPointer.png')}
@@ -536,6 +552,31 @@ class MapScreen extends Component{
                             strokeWidth={4}
                             strokeColor="#0059b3"
                         />
+                    {
+                        this.state.markers.map((marker) => {
+                            console.log(marker,'ooooooooooooooooopppppppppppppppppppppggggggggggggggggg')
+                            if(marker.isMechanic){
+                                return(
+                                    <MapView.Marker
+                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        title={marker.name}
+                                        description={marker.description}
+                                        image={require('./../../Images/mechanicPointer.png')}
+                                    />
+                                )
+                            }
+                            else{
+                                return(
+                                    <MapView.Marker
+                                        coordinate={marker.coordinates.latitude && marker.coordinates}
+                                        title={marker.name}
+                                        description={marker.description}
+                                        image={require('./../../Images/userPointer.png')}
+                                    />
+                                    )
+                            }
+                        })
+                    }
                 </MapView>
             </View>
         )

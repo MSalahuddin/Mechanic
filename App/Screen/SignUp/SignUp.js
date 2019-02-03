@@ -30,7 +30,8 @@ export default class SignUp extends Component{
             confirmResult:null,
             sendCode: false,
             codeInput: '',
-            signupLoader: false
+            signupLoader: false,
+            userExist: false
         }
         this.userSignUp = this.userSignUp.bind(this);
         this.confirmCode = this.confirmCode.bind(this);
@@ -48,11 +49,28 @@ export default class SignUp extends Component{
         }
 
         else{
-        let signupUser = await signUp(phoneNo)
-            if(signupUser){
-                this.setState({sendCode: true,confirmResult: signupUser, signupLoader: false})
-                Alert.alert('','Code send successfully')
-            }
+            db.collection("users").where("phoneNo", "==", phoneNo).get()
+                .then((res)=>{
+                    if(res._docs[0]._data.phoneNo == phoneNo){
+                        this.setState({userExist: true})
+                    }
+                })
+                .catch((err)=>{
+                });
+            setTimeout(async () => {
+              if(this.state.userExist) {
+                  Alert.alert('',"Account already created");
+                  this.setState({signupLoader: false})
+              }
+              else{
+                  let signupUser = await signUp(phoneNo);
+                  if (signupUser) {
+                      this.setState({sendCode: true, confirmResult: signupUser, signupLoader: false})
+                      Alert.alert('', 'Code send successfully')
+                  }
+              }
+
+            }, 3000)
         }
     }
 
