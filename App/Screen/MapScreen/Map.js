@@ -472,7 +472,6 @@ class MapScreen extends Component{
     }
 
     mapView(){
-        console.log('maoooooooooooooooooooooooooooooViiiiiiiiiewwwwwwwwwwwww')
         const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
         var coordinates = {latitude: this.state.latitude, longitude: this.state.longitude};
         return(
@@ -528,11 +527,6 @@ class MapScreen extends Component{
                         }
 
                     </MapView>
-                    {
-                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {screen: "QRCodeScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
-                        <Text style = {{fontSize: 17, color: 'white'}}>Job Done</Text>
-                    </TouchableOpacity>
-                    }
                 </View>
 
 
@@ -540,7 +534,8 @@ class MapScreen extends Component{
     }
 
     jobMapView(){
-        console.log('lllllllllllllllllllllllllllllllllllllljjjjjjjjjjj')
+        const {jobId, jobStatusId} = this.state;
+        const {user} = this.props;
         const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
         return(
             <View style = {{flex: 1}}>
@@ -589,12 +584,20 @@ class MapScreen extends Component{
                         })
                     }
                 </MapView>
+                { user.isMechanic ?
+                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRScannerScreen", {userId: this.state.userId, jobStatusId: this.state.jobStatusId, jobId: this.state.jobId, screen: "QRScannerScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
+                        <Text style = {{fontSize: 17, color: 'white'}}>Complete Job</Text>
+                    </TouchableOpacity>
+                    :
+                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {jobStatusId: jobStatusId, jobId: jobId, screen: "QRCodeScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
+                        <Text style = {{fontSize: 17, color: 'white'}}>Job Done</Text>
+                    </TouchableOpacity>
+                }
             </View>
         )
     }
 
     render() {
-        console.log(this.state.jobAccepted,'llllllllllllllllooooooooooooooppppppppppp')
         return (
             <View style ={{height: height, width: width}}>
                 <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
