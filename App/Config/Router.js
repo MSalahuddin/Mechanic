@@ -10,6 +10,8 @@ import { connect } from 'react-redux'
 import {signOut} from './Firebase'
 import firebase from 'react-native-firebase';
 import QRCodeScreen from '../Screen/QRCode/QRCode'
+import QRScannerScreen from '../Screen/QRScanner/QRScanner'
+import RateOrderScreen from '../Screen/RateOrder/RateOrderScreen'
 
 const {width, height} = Dimensions.get('window');
 const db = firebase.firestore();
@@ -39,11 +41,25 @@ class DrawerDisplay extends Component{
     render(){
         console.log(this.state.user,'userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr')
         return(
-            <View style={{flex: 1,flexDirection: 'column'}}>
+            <View style={{flex: 1,flexDirection: 'column', backgroundColor: 'orange'}}>
 
-                <View style={{height: height*0.25,borderWidth:0.5,borderBottomColor:'grey',borderLeftColor:'transparent',borderRightColor:'transparent',borderTopColor:'transparent'}}>
-                    <View style={{height : height*0.15,alignItems:'center',justifyContent:'center'}}>
-                        <View style={{height:height*0.12, width:height*0.12,borderRadius:100,alignItems:'center',justifyContent:'center', borderWidth:1,borderColor:'grey'}}>
+                <View style={{height: height*0.25,
+                              borderWidth:0.5,
+                              borderBottomColor:'white',
+                              borderLeftColor:'transparent',
+                              borderRightColor:'transparent',
+                              borderTopColor:'transparent'}}>
+                    <View style={{height : height*0.15,
+                                  alignItems:'center',
+                                  justifyContent:'center'}}>
+                        <View style={{height:height*0.12,
+                                      width:height*0.12,
+                                      borderRadius:100,
+                                      alignItems:'center',
+                                      backgroundColor: 'white',
+                                      justifyContent:'center',
+                                      borderWidth:1,
+                                      borderColor:'white'}}>
 
                             {this.state.user && this.state.user.profilePicture ?
                                 <Image source={{uri:this.state.user.profilePicture}} style={{width:60,height:60,borderRadius : 100}}/>:
@@ -52,31 +68,37 @@ class DrawerDisplay extends Component{
 
                         </View>
                     </View>
-                    <View style={{height:height*0.03,alignItems:'center',justifyContent:'center'}}>
-                        <Text style={{fontSize:16, fontFamily: 'gt-walsheim-regular'}}>{this.state.user && this.state.user.firstName + " " + this.state.user.lastName}</Text>
+                    <View style={{height:height*0.03,
+                                  alignItems:'center',
+                                  justifyContent:'center'}}>
+                        <Text style={{fontSize:16,
+                                      fontFamily: 'gt-walsheim-regular',
+                                      color: 'white'
+                                      }}>
+                            {this.state.user && this.state.user.firstName + " " + this.state.user.lastName}</Text>
                     </View>
                 </View>
 
                 <TouchableOpacity onPress={() => this.props.navigation.navigate("Profile", {screen: "Profile"})}>
-                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'grey',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
+                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
                         <View style={{flex: 1, flexDirection: 'row'}}>
                             <View style={{width: width*0.15,alignItems:'center',justifyContent:'center'}}>
                                 <Image source={require('../Images/profile.png')} style={{width:25,height:25}}/>
                             </View>
                             <View style={{width: width*0.5,alignItems:'center',justifyContent:'center'}}>
-                                <Text style={{fontSize:15, fontFamily: 'gt-walsheim-regular'}}>Profile</Text>
+                                <Text style={{fontSize:15, fontFamily: 'gt-walsheim-regular', color: 'white'}}>Profile</Text>
                             </View>
                         </View>
                     </View>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={()=>{this.signOut()}}>
-                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'grey',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
+                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
                         <View style={{flex: 1, flexDirection: 'row'}}>
                             <View style={{width: width*0.15,alignItems:'center',justifyContent:'center'}}>
                                 <Image source={require('../Images/logout.png')} style={{width:25,height:25}}/>
                             </View>
                             <View style={{width: width*0.5,alignItems:'center',justifyContent:'center'}}>
-                                <Text style={{fontSize:15,fontFamily: 'gt-walsheim-regular'}}>Logout</Text>
+                                <Text style={{fontSize:15,fontFamily: 'gt-walsheim-regular', color: 'white'}}>Logout</Text>
                             </View>
                         </View>
                     </View>
@@ -120,11 +142,12 @@ const DrawerNav = DrawerNavigator({
 }, DrawerNavigatorConfig);
 
 const Route = createStackNavigator({
-
     LoginScreen: {screen: LoginScreen},
     DrawerNav: {screen: DrawerNav},
     SignUp: {screen: SignUp},
-    QRCodeScreen: {screen: QRCodeScreen}
+    QRCodeScreen: {screen: QRCodeScreen},
+    QRScannerScreen: {screen: QRScannerScreen},
+    RateOrderScreen: {screen: RateOrderScreen}
 
 }, {
     headerMode: 'none'

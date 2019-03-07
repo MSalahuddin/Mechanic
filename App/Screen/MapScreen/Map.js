@@ -5,7 +5,7 @@ import {
     View,
     Image,
     Alert,
-    Platform, Dimensions, ActivityIndicator, TouchableOpacity,AsyncStorage
+    Platform, Dimensions, ActivityIndicator, TouchableOpacity,AsyncStorage,ToastAndroid
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
@@ -17,6 +17,8 @@ import MapViewDirections from 'react-native-maps-directions';
 import { Container, Header, Content, Card, CardItem, Body, Button} from "native-base";
 import {BoxShadow} from 'react-native-shadow'
 import _ from 'underscore';
+import Modal from "react-native-modal";
+import StarRating from 'react-native-star-rating';
 
 const db = firebase.firestore();
 
@@ -55,7 +57,8 @@ class MapScreen extends Component{
             jobAccepted: false,
             jobId: '',
             jobStatusId: '',
-            userId: ''
+            userId: '',
+            isModalVisible: false
 
         }
         this.getDeviceToken = this.getDeviceToken.bind(this);
@@ -126,7 +129,6 @@ class MapScreen extends Component{
     }
 
     async getMechanicAndUser(){
-        console.log('hellllllllllllllllllllllllllllll')
         const mechanic = await filterMechanic();
         const onlineMechanic = [];
         const user = this.props.user;
@@ -152,9 +154,12 @@ class MapScreen extends Component{
                 obj.image = mech.profilePicture;
                 obj.jobs = mech.jobs ? mech.jobs : [];
                 obj.phoneNo = mech.phoneNo;
+                obj.rating = mech.rating;
+                obj.avgRating = mech.avgRating
                 markers.push(obj);
             }
         });
+
         markers.push(userObj);
         this.setState({onlineMecahics: onlineMechanic, allMechanics: mechanic, markers: markers})
     }
@@ -245,15 +250,14 @@ class MapScreen extends Component{
         let calDist = res.route.distance;
         let calDistTime = res.route.formattedTime;
         this.setState({toggleInfo: true});
-        this.setState({mechanicDetails: marker, calDist, calDistTime})
+        this.setState({mechanicDetails: marker, calDist, calDistTime, isModalVisible: true})
     }
 
     async pushRequest(){
         const  {mechanicDetails, user} = this.state;
         let res = await pushReq(user, mechanicDetails.id, mechanicDetails.token);
         if(res.id){
-            Alert.alert('','Your job send successfully');
-
+            this.showToast('Your job send successfully');
             let jobs = [];
             let obj = {};
             let updateStatusRes = await createJobReq(res.id, user.id);
@@ -264,7 +268,7 @@ class MapScreen extends Component{
             let ress = await upateMechaincJobs(jobs, mechanicDetails.id, updateStatusRes.id);
             this.JobReqResponse(res.id, user.id, updateStatusRes.id);
 
-            this.setState({toggleInfo: false, jobId: res.id, jobStatusId: updateStatusRes.id});
+            this.setState({toggleInfo: false, jobId: res.id, jobStatusId: updateStatusRes.id, isModalVisible: false});
         }
     }
 
@@ -347,6 +351,13 @@ class MapScreen extends Component{
         this.setState({notifOpen: false})
     }
 
+    showToast = (message) =>{
+        ToastAndroid.show(
+            message,
+            ToastAndroid.SHORT
+        );
+    }
+
     setUserView(){
         const {jobNotif} = this.state;
         return(
@@ -413,61 +424,104 @@ class MapScreen extends Component{
     }
 
     mechanicDetailsView(){
+        const {mechanicDetails} = this.state;
+        console.log(mechanicDetails,'detailsssssssssssssss')
         return(
-            <View style = {{marginTop: height * 0.2, width: width, height: height* 0.7, position: 'absolute'}}>
-                <Content padder>
-                    <Card>
-                <View style = {{width: width * 0.9, height: height * 0.25, flexDirection: 'row'}}>
-                    <View style = {{width: width * 0.5, height: height * 0.25, marginLeft: width * 0.25}}>
-                        <View style = {{width: width * 0.2, height: width * 0.2, marginLeft: width * 0.12, borderRadius: 100, marginTop: height * 0.0375 }}>
+            <View style = {{flex: 1}}>
+                <Modal
+                    onBackdropPress = {() => this.setState({isModalVisible: false})}
+                    onBackButtonPress = {() => this.setState({isModalVisible: false})}
+                    isVisible={this.state.isModalVisible}
+                >
+
+                    <View style={{ width: width * 0.8,
+                     height: height * 0.7,
+                     backgroundColor: 'white',
+                     marginLeft: width * 0.05,
+                     borderRadius: 5,
+                     overflow: 'hidden',
+                     marginTop: height * 0.1
+                     }}>
+                        <View style = {{width: width * 0.25,
+                                        height: width * 0.25,
+                                        marginLeft: width * 0.3,
+                                        borderRadius: 100,
+                                        marginTop: height * 0.0375,
+                                        borderColor: 'orange',
+                                        backgroundColor: 'orange',
+                                        borderWidth: 1,
+                                        overflow: 'hidden'}}>
                             {this.state.mechanicDetails && this.state.mechanicDetails.image ?
-                                <Image style={{width: width * 0.2, height: width * 0.2, borderRadius: 100}} source={{uri: this.state.mechanicDetails.image}}/>
+                                <Image resizeMode = 'cover'
+                                       style = {{
+                                                 width: width * 0.25,
+                                                 height: width * 0.25
+                                                 }}
+                                       source={{uri: this.state.mechanicDetails.image}}/>
                                 :
-                                <Image style={{width: width * 0.17, height: width * 0.17}} source={require('./../../Images/profile.png')}/>
+                                <Image resizeMode = 'cover'
+                                       style = {{
+                                                 width: width * 0.25,
+                                                 height: width * 0.25
+                                                 }}
+                                       source={require('./../../Images/profile_placeholder.png')}/>
                             }
                         </View>
-                        <View style = {{width: width * 0.5, height: height * 0.1, marginTop: height * 0.02, alignItems: 'center'}}>
-                            <Text style={{fontSize: 20, color: '#11397a'}}>{this.state.mechanicDetails && this.state.mechanicDetails.name}</Text>
-                        </View>
-                    </View>
-                    <TouchableOpacity onPress = {() => this.setState({toggleInfo: false})} style = {{width: width * 0.15, height: height * 0.2}}>
-                        <Image source = {require('./../../Images/delete.png')} style = {{marginTop: height * 0.035, marginLeft: width * 0.05, width: width * 0.05, height: width * 0.05}}/>
-                    </TouchableOpacity>
-                </View>
-                <View style = {{width : width * 0.9, height: height * 0.22}}>
-                    <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
-                        <View style = {{width: width * 0.35, height: height * 0.05}}>
-                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Phone no:</Text>
-                        </View>
-                        <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
-                            <Text style={{color: '#11397a'}}>{this.state.mechanicDetails && this.state.mechanicDetails.phoneNo}</Text>
-                        </View>
-                    </View>
-                    <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
-                        <View style = {{width: width * 0.35, height: height * 0.05}}>
-                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Distane:</Text>
-                        </View>
-                        <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
-                            <Text style={{color: '#11397a'}}>{this.state.calDist} Km</Text>
-                        </View>
-                    </View>
-                    <View style = {{width: width * 0.9, height: height * 0.05, flexDirection: 'row'}}>
-                        <View style = {{width: width * 0.35, height: height * 0.05}}>
-                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Reaching Time:</Text>
-                        </View>
-                        <View style = {{width: width * 0.37, height: height * 0.05, marginLeft: width * 0.18}}>
-                            <Text style={{color: '#11397a'}}>{this.state.calDistTime}</Text>
-                        </View>
-                    </View>
-                </View>
-                <TouchableOpacity onPress = {()=> this.pushRequest()} style = {{width: width * 0.9, height: height * 0.15, alignItems: 'center'}}>
-                    <Image source = {require('./../../Images/check.png')} style = {{width: width * 0.1, height: width * 0.1}}/>
-                    <Text style = {{fontSize: 25, color: '#04931e'}}>Request</Text>
-                </TouchableOpacity>
-                    </Card>
-                </Content>
-            </View>
 
+                        <View style = {{width: width * 0.8, height: height * 0.05, alignItems: 'center'}}>
+                            <Text numberOfLines = {1} style={{fontSize: 15, color: 'orange', fontWeight: 'bold'}}>{this.state.mechanicDetails && this.state.mechanicDetails.name}</Text>
+                        </View>
+                        <View style = {{
+                                        borderBottomColor: 'grey',
+                                        borderBottomWidth: StyleSheet.hairlineWidth}}>
+
+                        </View>
+                        <View style = {{width: width * 0.8, height: height * 0.06, marginTop: height * 0.04, flexDirection: 'row', justifyContent: 'space-between'}}>
+                                <Text style={{color: '#11397a',  marginLeft: width * 0.07}}>Phone no:</Text>
+                                <Text style={{color: '#11397a',  marginRight: width * 0.07}}>{this.state.mechanicDetails && this.state.mechanicDetails.phoneNo}</Text>
+                        </View>
+                        <View style = {{width: width * 0.8, height: height * 0.06, flexDirection: 'row', justifyContent: 'space-between'}}>
+                                <Text style={{color: '#11397a',  marginLeft: width * 0.07}}>Distane:</Text>
+                                <Text style={{color: '#11397a', marginRight: width * 0.07}}>{this.state.calDist} Km</Text>
+                        </View>
+
+                        <View style = {{width: width * 0.8, height: height * 0.06, flexDirection: 'row', justifyContent: 'space-between'}}>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Reaching Time:</Text>
+                            <Text style={{color: '#11397a', marginRight: width * 0.07}}>{this.state.calDistTime}</Text>
+                        </View>
+
+                        <View style = {{width: width * 0.8, height: height * 0.06, flexDirection: 'row', justifyContent: 'space-between'}}>
+                            <Text style={{color: '#11397a', marginLeft: width * 0.07}}>Rating:</Text>
+                            <StarRating
+                                disabled={true}
+                                maxStars={5}
+                                emptyStar={require('./../../Images/star.png')}
+                                fullStar={require('./../../Images/fillStar.png')}
+                                halfStar={require('./../../Images/fillStar.png')}
+                                rating={mechanicDetails.avgRating ? mechanicDetails.avgRating : 0 }
+                                containerStyle = {{marginRight: width * 0.07}}
+                                starStyle = {{width: width* 0.07, height: width* 0.07}}
+                            />
+                        </View>
+
+                        <TouchableOpacity
+                            onPress = {()=> this.pushRequest()}
+                            style = {{
+                              width: width * 0.6,
+                              height: height * 0.08,
+                              backgroundColor: 'orange',
+                              borderRadius: 5,
+                              marginLeft: width * 0.1,
+                              elevation: 4,
+                              marginTop: height * 0.06,
+                              justifyContent: 'center',
+                              alignItems: 'center'
+                              }}>
+                                <Text style = {{fontSize: 20, color: 'white', fontWeight: 'bold'}}>Request</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Modal>
+            </View>
         )
     }
 
@@ -534,7 +588,7 @@ class MapScreen extends Component{
     }
 
     jobMapView(){
-        const {jobId, jobStatusId} = this.state;
+        const {jobId, jobStatusId, mechanicDetails} = this.state;
         const {user} = this.props;
         const GOOGLE_MAPS_APIKEY = 'AIzaSyCwjyTFzgxg-wUU5rfcny19N9w7EGlq31M';
         return(
@@ -560,7 +614,7 @@ class MapScreen extends Component{
                         />
                     {
                         this.state.markers.map((marker) => {
-                            console.log(marker,'ooooooooooooooooopppppppppppppppppppppggggggggggggggggg')
+
                             if(marker.isMechanic){
                                 return(
                                     <MapView.Marker
@@ -589,7 +643,7 @@ class MapScreen extends Component{
                         <Text style = {{fontSize: 17, color: 'white'}}>Complete Job</Text>
                     </TouchableOpacity>
                     :
-                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {jobStatusId: jobStatusId, jobId: jobId, screen: "QRCodeScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
+                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {jobStatusId: jobStatusId, jobId: jobId, screen: "QRCodeScreen", mechanicDetails: mechanicDetails})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
                         <Text style = {{fontSize: 17, color: 'white'}}>Job Done</Text>
                     </TouchableOpacity>
                 }
@@ -600,7 +654,7 @@ class MapScreen extends Component{
     render() {
         return (
             <View style ={{height: height, width: width}}>
-                <View style={{width: width, height: height* 0.08, backgroundColor: '#127c7e'}}>
+                <View style={{width: width, height: height* 0.08, backgroundColor: 'orange'}}>
                     <TouchableOpacity style= {Styles.headerSubContent}  onPress={() => this.props.navigation.openDrawer()}>
                         <Image source={require('./../../Images/menu.png')} style={Styles.menuImg}/>
                     </TouchableOpacity>

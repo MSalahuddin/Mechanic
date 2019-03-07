@@ -89,7 +89,8 @@ export default class SignUp extends Component{
                         description: description,
                         isMechanic: false,
                         id: user._user.uid,
-                        profilePicture: ''
+                        profilePicture: '',
+                        rating: []
                     })
                         .then((res)=>{
                             Alert.alert('','Successfully registered')

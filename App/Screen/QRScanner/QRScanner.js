@@ -45,26 +45,27 @@ class QRScannerScreen extends Component{
 
     render(){
         return(
-            <View>
+            <View style = {{backgroundColor: 'grey'}}>
                 <View style={Styles.header}>
-                    <Text style={Styles.headerText}>QR Code</Text>
+                    <Text style={Styles.headerText}>QR Scanner</Text>
                 </View>
-                <View style = {{width : width, height: height * 0.9, alignItems: 'center', justifyContent: 'center'}}>
+                <View style = {{width : width,
+                                height: height * 0.9
+                                }}>
+                    <View style = {{width: width * 0.8,
+                                    height: height * 0.67,
+                                    backgroundColor: 'white',
+                                    marginLeft: width * 0.1,
+                                    marginTop: height * 0.1,
+                                    borderRadius: 5}}>
+                        <QRCodeScanner
+                            cameraStyle = {{
+                                        width : width * 0.7,
+                                        marginLeft: width * 0.05}}
+                            onRead={(data) => this.qrScanner(data)}
 
-                    {<QRCodeScanner
-                     onRead={(data) => this.qrScanner(data)}
-                     topContent={
-                     <Text style={styles.centerText}>
-                     Go to <Text style={styles.textBold}>wikipedia.org/wiki/QR_code</Text> on your computer and scan the QR code.
-                     </Text>
-                     }
-                     bottomContent={
-                     <TouchableOpacity style={styles.buttonTouchable}>
-                     <Text style={styles.buttonText}>OK. Got it!</Text>
-                     </TouchableOpacity>
-                     }
-                     />}
-
+                        />
+                    </View>
                 </View>
             </View>
         )
