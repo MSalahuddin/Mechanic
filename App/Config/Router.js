@@ -12,6 +12,7 @@ import firebase from 'react-native-firebase';
 import QRCodeScreen from '../Screen/QRCode/QRCode'
 import QRScannerScreen from '../Screen/QRScanner/QRScanner'
 import RateOrderScreen from '../Screen/RateOrder/RateOrderScreen'
+import Empty from '../Screen/Empty/Empty';
 
 const {width, height} = Dimensions.get('window');
 const db = firebase.firestore();
@@ -30,18 +31,18 @@ class DrawerDisplay extends Component{
     async signOut(){
         let user = this.state.user;
         let id = user.id;
-        let res = await signOut(id)
+        let res = await signOut(id);
+
         console.log(res,'ppppppppppppppppppp');
         await AsyncStorage.setItem('user', '');
-        firebase.auth().signOut();
+        //firebase.auth().signOut();
         this.props.navigation.navigate("LoginScreen", {screen: "LoginScreen"})
     }
 
 
     render(){
-        console.log(this.state.user,'userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr')
         return(
-            <View style={{flex: 1,flexDirection: 'column', backgroundColor: 'orange'}}>
+            <View style={{flex: 1,flexDirection: 'column', backgroundColor: '#ff8c00'}}>
 
                 <View style={{height: height*0.25,
                               borderWidth:0.5,
@@ -79,7 +80,7 @@ class DrawerDisplay extends Component{
                     </View>
                 </View>
 
-                <TouchableOpacity onPress={() => this.props.navigation.navigate("Profile", {screen: "Profile"})}>
+                {<TouchableOpacity onPress={() => this.props.navigation.navigate("Profile", {screen: "Profile"})}>
                     <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
                         <View style={{flex: 1, flexDirection: 'row'}}>
                             <View style={{width: width*0.15,alignItems:'center',justifyContent:'center'}}>
@@ -90,7 +91,7 @@ class DrawerDisplay extends Component{
                             </View>
                         </View>
                     </View>
-                </TouchableOpacity>
+                </TouchableOpacity>}
                 <TouchableOpacity onPress={()=>{this.signOut()}}>
                     <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
                         <View style={{flex: 1, flexDirection: 'row'}}>
@@ -142,12 +143,15 @@ const DrawerNav = DrawerNavigator({
 }, DrawerNavigatorConfig);
 
 const Route = createStackNavigator({
+
     LoginScreen: {screen: LoginScreen},
     DrawerNav: {screen: DrawerNav},
     SignUp: {screen: SignUp},
     QRCodeScreen: {screen: QRCodeScreen},
     QRScannerScreen: {screen: QRScannerScreen},
-    RateOrderScreen: {screen: RateOrderScreen}
+    RateOrderScreen: {screen: RateOrderScreen},
+    Empty: {screen: Empty}
+
 
 }, {
     headerMode: 'none'

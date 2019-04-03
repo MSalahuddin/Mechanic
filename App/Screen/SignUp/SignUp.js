@@ -6,9 +6,22 @@ import firebase from 'react-native-firebase';
 import Styles from "./Styles";
 import LoginScreen from "../Login/Login";
 import {signUp} from './../../Config/Firebase'
+import CountDown from 'react-native-countdown-component';
 
-const db = firebase.firestore()
-const {height, width} = Dimensions.get('window')
+const db = firebase.firestore();
+const {height, width} = Dimensions.get('window');
+
+const textFieldPropsObject = {
+    // textAlign: "center",
+    selectionColor: "#e89225",
+    underlineColorAndroid: "transparent",
+    style: [Styles.input],
+    placeholderTextColor: 'white',
+    returnKeyType: "next",
+    enablesReturnKeyAutomaticallly: true
+    // multiline: true,
+    // numberOfLines: 1
+};
 
 export default class SignUp extends Component{
 
@@ -31,7 +44,8 @@ export default class SignUp extends Component{
             sendCode: false,
             codeInput: '',
             signupLoader: false,
-            userExist: false
+            userExist: false,
+            showResend: false
         }
         this.userSignUp = this.userSignUp.bind(this);
         this.confirmCode = this.confirmCode.bind(this);
@@ -106,10 +120,204 @@ export default class SignUp extends Component{
         }
     }
 
-    render(){
+    renderHeader = () => {
+        return(
+            <View style = {{width: width * 0.325,
+                                             height: width * 0.325,
+                                        marginTop: height * 0.05,
+                                        justifyContent: 'center',
+                                        borderColor: '#ff8c00',
+                                        borderRadius: 100,
+                                        alignItems: 'center',
+                                        borderWidth: 2}}>
+                <Image style = {{
+                                             width: width * 0.32,
+                                             height: width * 0.32
+                                             }}
+                       resizeMode = 'contain'
+                       source = {require('../../Images/profile_placeholder.png')}/>
+
+            </View>
+        )
+    }
+
+    renderSeperator = () => {
+        return <View style={Styles.seperator} />;
+    };
+
+
+    renderFirstName = () => {
+        return(
+
+                <TextInput
+                    {...textFieldPropsObject}
+                    numberOfLines={1}
+                    placeholder= 'First Name'
+                    value={this.state.firstName}
+                    onChangeText = {(text)=> this.setState({firstName: text})}
+                    style={Styles.inputField}
+
+                />
+
+        )
+    }
+
+    renderLastName = () => {
+        return(
+                <TextInput
+                    {...textFieldPropsObject}
+                    numberOfLines={1}
+                    placeholder= 'Last Name'
+                    value={this.state.lastName}
+                    style={Styles.inputField}
+                    onChangeText = {(text)=> this.setState({lastName: text})}
+                />
+        )
+    }
+
+    renderMobileNumber = () => {
+        return(
+            <TextInput
+                {...textFieldPropsObject}
+                numberOfLines={1}
+                keyboardType={"phone-pad"}
+                placeholder= 'Mobile no'
+                value={this.state.phoneNo}
+                style={Styles.inputField}
+                maxLength={13}
+                onChangeText = {(text)=> this.setState({phoneNo: text})}
+            />
+        )
+    }
+
+    renderPassword = () => {
+        return(
+            <TextInput
+                {...textFieldPropsObject}
+                numberOfLines={1}
+                placeholder= 'Password'
+                value={this.state.password}
+                secureTextEntry={true}
+                style={Styles.inputField}
+                onChangeText = {(text)=> this.setState({password: text})}
+            />
+        )
+    }
+
+    renderRetypPassword = () => {
+        return(
+            <TextInput
+                {...textFieldPropsObject}
+                numberOfLines={1}
+                placeholder= 'Re-type password'
+                value={this.state.retypePass}
+                secureTextEntry={true}
+                style={Styles.inputField}
+                onChangeText = {(text)=> this.setState({retypePass: text})}
+            />
+        )
+    }
+
+    renderEmail = () => {
+        return(
+            <TextInput
+                {...textFieldPropsObject}
+                numberOfLines={2}
+                keyboardType={"email-address"}
+                placeholder= 'Email'
+                value={this.state.email}
+                style={Styles.inputField}
+                onChangeText = {(text)=> this.setState({email: text})}
+            />
+        )
+    }
+
+    renderSignupButton = () => {
+        return(
+            <TouchableOpacity onPress={()=> this.userSignUp()}>
+                <View style={Styles.signupButton}>
+                    {this.state.signupLoader ?
+                        <ActivityIndicator size="small" color="#0000ff"/> :
+                        <Text style={{
+                                fontSize: 18,
+                                color: 'white',
+                                fontFamily: 'monospace',
+                                fontWeight: 'bold'
+                                }}>
+                            SignUp
+                        </Text>
+                    }
+                </View>
+            </TouchableOpacity>
+        )
+    }
+
+    renderCountDown = () => {
         return(
             <View>
-                <KeyboardAwareScrollView innerRef={ref => {this.scroll = ref}} enableOnAndroid={true} >
+                <Text style = {{color: '#ff8c00', fontSize: 15, textAlign: 'center'}}>Resend SMS code in</Text>
+                <CountDown
+                    until={30}
+                    size={20}
+                    onFinish={() => alert("Finished")}
+                    digitStyle={{ backgroundColor: '#4d4d4d' }}
+                    digitTxtStyle={{ color: 'white' }}
+                    timeLabelStyle={{ color: '#ff8c00' }}
+                    timeToShow={["S", "MS"]}
+                />
+
+            </View>
+        )
+    }
+
+    resetTimer = () => {
+        this.setState({ showResend: false });
+        setTimeout(() => {
+            this.setState({ showResend: true });
+        }, 30000);
+    };
+
+    renderVerificationCode = () => {
+        const  { showResend } = this.state;
+        return(
+            <View style={{flex: 1}}>
+                <View style = {{width: width, height: height * 0.2, alignItems: 'center', marginTop: height * 0.1}}>
+                    <Text style = {{color: 'white', fontSize: 18}}>Verification Code</Text>
+                    <Text style = {{color: 'white', fontSize: 13, marginTop: height * 0.1}}>Please enter verification code </Text>
+                    <Text style = {{color: 'white', fontSize: 13}}>sent to {this.state.phoneNo}</Text>
+                </View>
+                <TextInput
+                    {...textFieldPropsObject}
+                    underlineColorAndroid={"transparent"}
+                    placeholderTextColor = '#ff8c00'
+                    selectionColor = '#ff8c00'
+                    maxLength={6}
+                    returnKeyType="done"
+                    autoCapitalize={"none"}
+                    autoCorrect={false}
+                    style = {Styles.codeInput}
+                    placeholder={"_ _ _ _ _ _"}
+                    secureTextEntry = {false}
+                    value = {this.state.codeInput}
+                    onChangeText={(text)=>this.setState({codeInput:text})}
+                    onSubmitEditing={() => this.confirmCode()}
+                    keyboardType="numeric"
+                />
+                {showResend ?
+                    <Text
+                        onPress = {() => this.resetTimer()}
+                        style = {{color: '#ff8c00', fontSize: 15, textAlign: 'center'}}>Resend SMS code</Text>
+                    :
+                    this.renderCountDown()
+                }
+            </View>
+        )
+    }
+
+    render(){
+        const {sendCode} = this.state;
+        return(
+            <View style = {{flex: 1, backgroundColor: '#4d4d4d'}}>
                     <View style={Styles.header}>
                         <View style={Styles.headerSub}>
                             <TouchableOpacity onPress={()=> this.props.navigation.goBack()}>
@@ -120,119 +328,32 @@ export default class SignUp extends Component{
                             <Text style={Styles.headingText}>Create an Account</Text>
                         </View>
                     </View>
-                {this.state.sendCode ?
-                    <View style={{width: width, height: height* 0.3, marginTop: height* 0.3}}>
-                        <Text style={{fontSize:20}}>{this.state.message}</Text>
-                        <TextInput
-                            style = {{color:'black'}}
-                            placeholder = 'XXXXXX'
-                            secureTextEntry = {false}
-                            value = {this.state.codeInput}
-                            onChangeText={(text)=>this.setState({codeInput:text})}
-                            keyboardType="numeric"
-                        />
-                        <Button title="Confirm Code" color="#841584" onPress={()=> this.confirmCode()} />
-                    </View>
+                {sendCode ?
+                    this.renderVerificationCode()
                     :
-                    <View>
-                        <View style={{borderRadius: 20, width:width * 0.8, height:height*0.74, backgroundColor:'#aaaeb5', opacity: 0.9, marginTop: height*0.02, marginLeft: width*0.1}}>
-                            <View style={{width: width*0.8, height: height*0.65, paddingRight:20, marginLeft: width * 0.04}}>
-                                <ScrollView>
-                                    <View>
-                                        <View>
-                                            <TextInput
-                                                underlineColorAndroid = 'transparent'
-                                                placeholder= 'First Name'
-                                                value={this.state.firstName}
-                                                style={Styles.inputField}
-                                                onChangeText = {(text)=> this.setState({firstName: text})}
-                                            />
-                                        </View>
-                                        <View>
-                                            <TextInput
-                                                underlineColorAndroid = 'transparent'
-                                                placeholder= 'Last Name'
-                                                value={this.state.lastName}
-                                                style={Styles.inputField}
-                                                onChangeText = {(text)=> this.setState({lastName: text})}
-                                            />
-                                        </View>
-                                        <View>
-                                            <TextInput
-                                                underlineColorAndroid = 'transparent'
-                                                placeholder= 'Email'
-                                                value={this.state.email}
-                                                style={Styles.inputField}
-                                                onChangeText = {(text)=> this.setState({email: text})}
-                                            />
-                                        </View>
-                                        <View onLayout={(e)=> {
-                                            footerY = e.nativeEvent.layout.y;
-                                        }}>
-                                            <TextInput
-                                                underlineColorAndroid = 'transparent'
-                                                keyboardType = 'numeric'
-                                                placeholder= 'Mobile no'
-                                                value={this.state.phoneNo}
-                                                style={Styles.inputField}
-                                                maxLength={13}
-                                                onChangeText = {(text)=> this.setState({phoneNo: text})}
-                                            />
-                                        </View>
-                                        <View>
-                                            <TextInput
-                                                underlineColorAndroid = 'transparent'
-                                                placeholder= 'Password'
-                                                value={this.state.password}
-                                                secureTextEntry={true}
-                                                style={Styles.inputField}
-                                                onChangeText = {(text)=> this.setState({password: text})}
-                                            />
-                                        </View>
-                                        <View>
-                                            <TextInput
-                                                underlineColorAndroid = 'transparent'
-                                                placeholder= 'Re-type password'
-                                                value={this.state.retypePass}
-                                                secureTextEntry={true}
-                                                style={Styles.inputField}
-                                                onChangeText = {(text)=> this.setState({retypePass: text})}
-                                            />
-                                        </View>
-                                        <View>
-                                            <TextInput
-                                                multiline={true}
-                                                numberOfLines={4}
-                                                blurOnSubmit={false}
-                                                underlineColorAndroid = 'transparent'
-                                                placeholder= 'Description'
-                                                value={this.state.description}
-                                                secureTextEntry={false}
-                                                style={Styles.inputField}
-                                                onChangeText = {(text)=> this.setState({description: text})}
-                                            />
-                                        </View>
-                                    </View>
-                                </ScrollView>
+                    <KeyboardAwareScrollView innerRef={ref => {this.scroll = ref}} enableOnAndroid={true} >
+                        <View style = {{ alignItems: 'center', marginBottom: height * 0.05}}>
+                        {this.renderHeader()}
+                            <View style = {{marginTop: height* 0.01}}>
+                                {this.renderFirstName()}
+                                {this.renderSeperator()}
+                                {this.renderLastName()}
+                                {this.renderSeperator()}
+                                {this.renderEmail()}
+                                {this.renderSeperator()}
+                                {this.renderMobileNumber()}
+                                {this.renderSeperator()}
+                                {this.renderPassword()}
+                                {this.renderSeperator()}
+                                {this.renderRetypPassword()}
+                                {this.renderSeperator()}
+                                {this.renderSignupButton()}
                             </View>
-                            <TouchableOpacity onPress = {()=>this.userSignUp()}>
-                                <View style = {{width:width*0.8, height: height*0.09, backgroundColor:'#7085a5',alignItems: 'center',justifyContent:'center', borderBottomLeftRadius:20, borderBottomRightRadius: 20}}>
-                                    {this.state.signupLoader ?
-                                        <ActivityIndicator size="small" color="#0000ff"/> :
-                                        <Text style = {{fontSize:18, color:'#fff', fontFamily : 'monospace', fontWeight: 'bold'}}>SignUp</Text>
-                                    }
-                                </View>
-                            </TouchableOpacity>
                         </View>
+                    </KeyboardAwareScrollView>
 
-                        <View style={Styles.footer}>
-                            <TouchableOpacity onPress={() => this.props.navigation.navigate("LoginScreen", {screen: "LoginScreen"})}>
-                                <Text style={Styles.footerText}>Back to login</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
                 }
-                </KeyboardAwareScrollView>
+
             </View>
         )
     }

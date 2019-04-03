@@ -8,8 +8,20 @@ import LocationServicesDialogBox from "react-native-android-location-services-di
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import {onLogin} from '../../redux/auth/action'
+import CountDown from 'react-native-countdown-component';
 
 const {height, width} = Dimensions.get('window')
+const textFieldPropsObject = {
+    // textAlign: "center",
+    selectionColor: "#e89225",
+    underlineColorAndroid: "transparent",
+    style: [Styles.input],
+    placeholderTextColor: 'white',
+    returnKeyType: "next",
+    enablesReturnKeyAutomaticallly: true
+    // multiline: true,
+    // numberOfLines: 1
+};
 
 class LoginScreen extends Component{
     static navigationOptions = {
@@ -23,7 +35,9 @@ class LoginScreen extends Component{
             sendCode: false,
             codeInput: '',
             confirmResult:null,
-            loginLoader: false
+            loginLoader: false,
+            showResend: false,
+            loginConfirmed: false
         }
         this.login = this.login.bind(this);
         this.confirmCode = this.confirmCode.bind(this);
@@ -32,6 +46,7 @@ class LoginScreen extends Component{
     componentWillMount(){
         this.autoLogin()
         this.getPermission();
+        this.resetTimer();
     }
     async getPermission() {
         LocationServicesDialogBox.checkLocationServicesIsEnabled({
@@ -51,12 +66,10 @@ class LoginScreen extends Component{
         });
     }
     async autoLogin(){
-        console.log('sssssssssssssssssssss')
         const value = await AsyncStorage.getItem('user');
         const user = JSON.parse(value);
         if(user){
             this.props.onLogin(user.id);
-            console.log(user,'uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuyyyyyyyyyyyyyyyyyyyyyyyyyy')
             setTimeout(()=>{
                 this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
             },3000)
@@ -64,18 +77,26 @@ class LoginScreen extends Component{
     }
    async login(){
         const {phoneNo, loginLoader} = this.state;
-        this.setState({loginLoader: true})
+        this.setState({loginLoader: true});
        setTimeout(()=>{
-           if(!this.state.sendCode){
+           if(!this.state.loginConfirmed){
                Alert.alert('', "First create an account ")
                this.setState({loginLoader: false, phoneNo: '' })
            }
        },10000);
        let user = await loginUser(phoneNo);
        if(user){
-           this.setState({sendCode: true, confirmResult: user, loginLoader: false, phoneNo: ''});
-            Alert.alert('','Code send successfully')
+           this.setState({loginLoader: false, phoneNo: '', loginConfirmed: true});
+           user && user._docs[0] && user._docs[0]._data.id && this.props.onLogin(user._docs[0]._data.id);
+           setTimeout(()=>{
+               //this.props.navigation.navigate("Empty", {screen: "Empty"})
+               this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+           },3000)
        }
+       //if(user){
+       //    this.setState({sendCode: true, confirmResult: user, loginLoader: false, phoneNo: ''});
+       //     Alert.alert('','Code send successfully')
+       //}
     }
 
     confirmCode(){
@@ -87,6 +108,7 @@ class LoginScreen extends Component{
                     Alert.alert('', 'Code confirmed')
                     this.setState({codeInput: ''});
                     setTimeout(()=>{
+                        //this.props.navigation.navigate("Empty", {screen: "Empty"})
                         this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
                     },3000)
                 })
@@ -97,60 +119,110 @@ class LoginScreen extends Component{
         }
     }
 
-    render(){
+    resetTimer = () => {
+        this.setState({ showResend: false });
+        setTimeout(() => {
+            this.setState({ showResend: true });
+        }, 30000);
+    };
+
+
+    renderCountDown = () => {
         return(
             <View>
+                <Text style = {{color: '#ff8c00', fontSize: 15, textAlign: 'center'}}>Resend SMS code in</Text>
+                <CountDown
+                    until={30}
+                    size={20}
+                    onFinish={() => alert("Finished")}
+                    digitStyle={{ backgroundColor: '#4d4d4d' }}
+                    digitTxtStyle={{ color: 'white' }}
+                    timeLabelStyle={{ color: '#ff8c00' }}
+                    timeToShow={["S", "MS"]}
+                />
+
+            </View>
+        )
+    }
+
+    renderVerificationCode = () => {
+        const  { showResend } = this.state;
+        return(
+            <View style={{flex: 1}}>
+                <View style = {{width: width, height: height * 0.2, alignItems: 'center', marginTop: height * 0.1}}>
+                    <Text style = {{color: 'white', fontSize: 18}}>Verification Code</Text>
+                    <Text style = {{color: 'white', fontSize: 13, marginTop: height * 0.1}}>Please enter verification code </Text>
+                    <Text style = {{color: 'white', fontSize: 13}}>sent to {this.state.phoneNo}</Text>
+                </View>
+                <TextInput
+                    {...textFieldPropsObject}
+                    underlineColorAndroid={"transparent"}
+                    placeholderTextColor = '#ff8c00'
+                    selectionColor = '#ff8c00'
+                    maxLength={6}
+                    returnKeyType="done"
+                    autoCapitalize={"none"}
+                    autoCorrect={false}
+                    style = {Styles.codeInput}
+                    placeholder={"_ _ _ _ _ _"}
+                    secureTextEntry = {false}
+                    value = {this.state.codeInput}
+                    onChangeText={(text)=>this.setState({codeInput:text})}
+                    onSubmitEditing={() => this.confirmCode()}
+                    keyboardType="numeric"
+                />
+                {showResend ?
+                    <Text
+                        onPress = {() => this.resetTimer()}
+                        style = {{color: '#ff8c00', fontSize: 15, textAlign: 'center'}}>Resend SMS code</Text>
+                    :
+                    this.renderCountDown()
+                }
+            </View>
+        )
+    }
+
+    onChangePhoneNo = (text) => {
+        const {phoneNo} = this.state;
+        console.log(phoneNo.length,'kkkkkkkkkkkkkkkkkkkkkkkjjjjjjjjjjjjj')
+        if(phoneNo.length < 13){
+            this.setState({ phoneNo: text})
+        }
+    }
+
+    render(){
+        const  { sendCode } = this.state;
+        return(
+            <View style = {{flex: 1, backgroundColor: '#4d4d4d'}}>
                 <View style={Styles.header}>
-                    <Text style={Styles.headerText}>LOG IN</Text>
+                    {this.state.sendCode ?
+                        <Text style={Styles.headerText}>Enter Verification Code</Text>
+                        :
+                        <Text style={Styles.headerText}>LOG IN</Text>
+                    }
                 </View>
-                {this.state.sendCode ?
-                    <View style={{width: width, height: height* 0.3, marginTop: height* 0.3}}>
-                    <Text style={{fontSize:20}}>{this.state.message}</Text>
-                    <TextInput
-                        style = {{color:'black'}}
-                        placeholder = 'XXXXXX'
-                        secureTextEntry = {false}
-                        value = {this.state.codeInput}
-                        onChangeText={(text)=>this.setState({codeInput:text})}
-                        keyboardType="numeric"
-                    />
-                    <Button title="Confirm Code" color="#841584" onPress={()=> this.confirmCode()} />
-                </View>
+                {sendCode ?
+                    this.renderVerificationCode()
                 :
                 <View>
                     <View style={{width:width,height:height*0.2,alignItems:'center',justifyContent:'flex-end'}}>
-                        <Text style={{fontWeight:'bold',fontSize:24,color:'#7085a5'}}>Online Mechanic</Text>
+                        <Text style={{fontWeight:'bold',fontSize:24,color:'white'}}>AutoResque</Text>
                     </View>
-                    <View style={{borderRadius: 20, width:width * 0.8, height:height*0.25, backgroundColor:'#aaaeb5', opacity: 0.9, marginTop: height*0.08, marginLeft: width*0.1}}>
-                        <View style={{width: width*0.8, height: height*0.16, paddingRight:20}}>
-                            <View style={{marginTop: height * 0.02, marginLeft: height* 0.02}}>
-                                <PhoneInput
-                                    ref={ref => {
-                                        this.phone = ref;
-                                    }}
-                                    initialCountry={'pk'}
-                                    value = {this.state.phoneNo}
-                                    flagStyle={{width: 40, height: 30, borderWidth:0}}
-                                    textStyle={{fontSize:20}}
-                                    textProps={{placeholder: 'Telephone number'}}
-                                    onChangePhoneNumber={(text)=> this.setState({ phoneNo: text}) }
-                                />
-                            </View>
-                        </View>
-                        <TouchableOpacity onPress={()=> this.login()}>
-                            <View style={{width:width*0.8, height: height*0.09, backgroundColor:'#7085a5',alignItems: 'center',justifyContent:'center', borderBottomLeftRadius:20, borderBottomRightRadius: 20}}>
-                                {this.state.loginLoader ?
-                                    <ActivityIndicator size="small" color="#0000ff"/> :
-                                    <Text style={{
-                                        fontSize: 18,
-                                        color: '#fff',
-                                        fontFamily: 'monospace',
-                                        fontWeight: 'bold'
-                                    }}>Login</Text>
-                                }
-                                    </View>
-                        </TouchableOpacity>
-                    </View>
+
+                          <PhoneInput
+                              ref={ref => {
+                                   this.phone = ref;
+                                  }}
+                              initialCountry={'pk'}
+                              value = {this.state.phoneNo}
+                              flagStyle={{width: 40, height: 30, borderWidth:0, marginLeft: width * 0.03}}
+                              textStyle={{fontSize:20}}
+                              style = {Styles.phoneInput}
+                              textProps={{placeholder: 'Telephone number'}}
+                              onChangePhoneNumber={(text)=> this.onChangePhoneNo(text) }
+                          />
+
+
 
                     <View style={Styles.footer}>
                         <TouchableOpacity onPress={() => this.props.navigation.navigate("SignUp", {screen: "SignUp"})}>
@@ -159,6 +231,21 @@ class LoginScreen extends Component{
                             </Text>
                         </TouchableOpacity>
                     </View>
+
+                    <TouchableOpacity onPress={()=> this.login()}>
+                        <View style={Styles.loginBtn}>
+                            {this.state.loginLoader ?
+                                <ActivityIndicator size="small" color="#800000"/> :
+                                <Text style={{
+                                        fontSize: 18,
+                                        color: 'white',
+                                        fontFamily: 'monospace',
+                                        fontWeight: 'bold'
+                                    }}>Login</Text>
+                            }
+                        </View>
+                    </TouchableOpacity>
+
                 </View>
                 }
             </View>

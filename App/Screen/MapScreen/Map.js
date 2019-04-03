@@ -342,8 +342,8 @@ class MapScreen extends Component{
         let updateStatusRes = await acceptJobReq(currentJob, jobNotif, user);
         if(updateStatusRes == 'Job Accepted Successfully'){
             this.updateMapLocation();
-            this.setState({jobAccepted: true, jobId: currentJob.jobId, jobStatusId: currentJob.jobStatusId, userId: jobNotif.id})
-            Alert.alert(updateStatusRes)
+            this.setState({jobAccepted: true, jobId: currentJob.jobId, jobStatusId: currentJob.jobStatusId, userId: jobNotif.id, notifOpen: false})
+            this.showToast(updateStatusRes)
         }
         else{
             Alert.alert("Something went wrong")
@@ -358,66 +358,131 @@ class MapScreen extends Component{
         );
     }
 
+
     setUserView(){
-        const {jobNotif} = this.state;
+        const {jobNotif, notifOpen} = this.state;
         return(
-            <View style = {{width: width, height: height * 0.4, position: 'absolute', marginTop: height * 0.5}}>
-                <Content padder>
-                    <Card>
-                        <CardItem header bordered style = {{height: height * 0.07}}>
-                            <View style={{width:width, flexDirection: 'row'}}>
-                                <View style={{width: width * 0.65, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
-                                    <Text style={{color:'#80aaff', fontSize: 15, fontWeight: 'bold'}}>Reaching destination in 19 minutes!</Text>
-                                </View>
-                                <View style={{width: width * 0.25, height: height* 0.07, justifyContent: 'center', alignItems:'center'}}>
-                                    <Text style={{color:'#80aaff', fontSize: 17, fontWeight: 'bold'}}>{parseFloat(this.state.distanceTravelled).toFixed(2)} km</Text>
-                                </View>
-                            </View>
-                        </CardItem>
-                        <CardItem bordered>
-                            <Body>
-                                <View style = {{width: width, height: height * 0.13, flexDirection: 'row'}}>
-                                    <View style = {{width: width * 0.4, justifyContent: 'center', alignItems: 'center'}}>
-                                        <View style = {{width: width * 0.15, height: width * 0.15, borderRadius: 100}}>
-                                            {jobNotif.profilePicture ?
-                                                <Image source = {{uri: jobNotif.profilePicture}} style = {{ borderRadius: 100, width: width * 0.12, height: width * 0.12}}/>:
-                                                <Image source = {require('./../../Images/profile.png')} style = {{width: width * 0.12, height: width * 0.12}}/>
+            <View style = {{flex: 1}}>
+                <Modal
+                    isVisible={notifOpen}
+                >
 
-                                            }
-                                        </View>
-                                        <View style = {{width: width * 0.4}}>
-                                            <Text style = {{fontSize: 14, fontWeight: 'bold', marginLeft: width * 0.06}}>{jobNotif.name}</Text>
-                                        </View>
-                                    </View>
-                                    <View style={{width: width* 0.003, height: height* 0.11, backgroundColor: '#b7b7b7', marginTop: height* 0.012}}>
 
-                                    </View>
-                                    <View style = {{width: width * 0.4, justifyContent: 'center', alignItems: 'center', marginLeft: width * 0.04}}>
-                                        <View style = {{width: width * 0.4, height: height * 0.06}}>
-                                            <Text style = {{fontSize: 15, fontWeight: 'bold'}}>{jobNotif.phoneNo}</Text>
-                                        </View>
-                                        <View style = {{width: width * 0.4, height: height * 0.08}}>
-                                            <Text style = {{fontSize: 15, fontWeight: 'bold'}}>Vehicle Type:</Text>
-                                            <Text style = {{fontSize: 15, fontWeight: 'bold'}}>Bike</Text>
-                                        </View>
+                    <View style={{ width: width * 0.9,
+                     height: height * 0.4,
+                     backgroundColor: 'white',
+                     marginLeft: width * 0,
 
-                                    </View>
-                                </View>
-                            </Body>
-                        </CardItem>
-                        <CardItem footer bordered>
-                            <View style = {{width: width, height: height * 0.08, flexDirection: 'row'}}>
-                                <TouchableOpacity onPress = {() => {this.acceptJob()}} style = {{width: width * 0.4, height: height * 0.07, justifyContent: 'center', alignItems: 'center', borderRadius: 20, backgroundColor: '#4d79ff'}}>
-                                    <Text>Accept Job</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style = {{width: width * 0.4, height: height * 0.07, marginLeft: width * 0.04, justifyContent: 'center', alignItems: 'center', borderRadius: 20, backgroundColor: '#ff3333'}}>
-                                    <Text>Reject Job</Text>
-                                </TouchableOpacity>
+                     overflow: 'hidden',
+                     marginTop: height * 0.2,
+                     alignItems: 'center'
+                     }}>
+                        <View style = {{
+                                        width: width *0.8 ,
+                                        height: height * 0.05,
+                                        marginTop: height * 0.03,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexDirection: 'row'}}
+                        >
+                            <Text numberOfLines = {1}
+                                style = {{color: '#ff8c00', fontSize: 17, width: width * 0.63}}>Destination distance time:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 17}}>10 Min</Text>
+                        </View>
 
-                            </View>
-                        </CardItem>
-                    </Card>
-                </Content>
+                        <View style = {{
+                                        width: width *0.8 ,
+                                        height: height * 0.05,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexDirection: 'row'}}
+                        >
+                            <Text style = {{color: '#ff8c00', fontSize: 17, width: width * 0.6}}>Destination distance:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 17}}>{parseFloat(this.state.distanceTravelled).toFixed(2)} km</Text>
+                        </View>
+
+                        <View style = {{
+                                        width: width *0.8 ,
+                                        height: height * 0.05,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexDirection: 'row'}}
+                        >
+                            <Text style = {{color: '#ff8c00', fontSize: 17, width: width * 0.6}}>Phone No:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 17}}>{jobNotif.phoneNo}</Text>
+                        </View>
+
+                        <View style = {{
+                                        width: width *0.8 ,
+                                        height: height * 0.05,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexDirection: 'row'}}
+                        >
+                            <Text style = {{color: '#ff8c00', fontSize: 17, width: width * 0.6}}>Vehicle Type:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 17}}>{jobNotif.phoneNo}</Text>
+                        </View>
+
+                        <View style = {{width: width,
+                                        height: height * 0.18,
+                                        justifyContent: 'center',
+                                        flexDirection: 'row',
+                                        alignItems: 'center'
+                                        }}>
+                            <TouchableOpacity
+                                onPress = {() => {this.acceptJob()}}
+                                style = {{
+                                        height: height * 0.07,
+                                        width: width * 0.35,
+                                        borderWidth: 2,
+                                        borderColor: '#ff8c00',
+                                        borderRadius: 5,
+                                        justifyContent: 'center',
+                                        alignItems: 'center'
+                                        }}>
+                                <Text style = {{fontSize: 17, fontWeight: 'bold', color: '#ff8c00'}}>Accept</Text>
+
+                            </TouchableOpacity>
+                            <TouchableOpacity style = {{
+                                                        height: height * 0.07,
+                                                        width: width * 0.35,
+                                                        borderWidth: 2,
+                                                        borderColor: '#ff8c00',
+                                                        borderRadius: 5,
+                                                        marginLeft: width * 0.06,
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center'}}>
+                                <Text style = {{fontSize: 17, fontWeight: 'bold', color: '#ff8c00'}}>Reject</Text>
+
+                            </TouchableOpacity>
+                        </View>
+
+                        {/*<View style = {{width: width * 0.15, height: width * 0.15, borderRadius: 100}}>
+                            {jobNotif.profilePicture ?
+                                <Image source = {{uri: jobNotif.profilePicture}} style = {{ borderRadius: 100, width: width * 0.12, height: width * 0.12}}/>:
+                                <Image source = {require('./../../Images/profile.png')} style = {{width: width * 0.12, height: width * 0.12}}/>
+
+                            }
+                        </View>*/}
+
+                        {/*<View style = {{width: width * 0.21,
+                                        height: width * 0.21,
+                                        borderRadius: 100,
+                                        marginTop: height * 0.1,
+                                        marginRight: width * 0.4,
+                                        borderWidth: 5,
+                                        borderColor: '#ff8c00',
+                                        justifyContent: 'center',
+                                        alignItems: 'center'}}>
+                            <Image resizeMode = "contain"
+                                   resizeMethod = "auto"
+                                   source = {require('./../../Images/profile_placeholder.png')}
+                                   style = {{width: width * 0.2, height: width * 0.2}}/>
+                        </View>*/}
+                    </View>
+
+
+                </Modal>
             </View>
 
         )
@@ -425,7 +490,6 @@ class MapScreen extends Component{
 
     mechanicDetailsView(){
         const {mechanicDetails} = this.state;
-        console.log(mechanicDetails,'detailsssssssssssssss')
         return(
             <View style = {{flex: 1}}>
                 <Modal
@@ -654,7 +718,7 @@ class MapScreen extends Component{
     render() {
         return (
             <View style ={{height: height, width: width}}>
-                <View style={{width: width, height: height* 0.08, backgroundColor: 'orange'}}>
+                <View style={{width: width, height: height* 0.08, backgroundColor: '#ff8c00', elevation: 2}}>
                     <TouchableOpacity style= {Styles.headerSubContent}  onPress={() => this.props.navigation.openDrawer()}>
                         <Image source={require('./../../Images/menu.png')} style={Styles.menuImg}/>
                     </TouchableOpacity>
@@ -667,7 +731,7 @@ class MapScreen extends Component{
                     </View>
                 }
                 </View>
-
+                {/*true ? this.setUserView() : this.state.toggleInfo ? this.mechanicDetailsView() : null*/}
                 {this.state.notifOpen ? this.setUserView() : this.state.toggleInfo ? this.mechanicDetailsView() : null}
 
             </View>

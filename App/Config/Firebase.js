@@ -6,10 +6,11 @@ const loginUser = (phoneNo) => {
         db.collection("users").where("phoneNo", "==", phoneNo).get()
             .then((res)=>{
                 if(res._docs[0]._data.phoneNo == phoneNo){
-                    firebase.auth().signInWithPhoneNumber(phoneNo)
-                        .then(confirmResult => {
-                            resolve(confirmResult)
-                        })
+                    resolve(res)
+                    //firebase.auth().signInWithPhoneNumber(phoneNo)
+                    //    .then(confirmResult => {
+                    //        resolve(confirmResult)
+                    //    })
                 }
                 else{
                     let msg = "please first create an account"
