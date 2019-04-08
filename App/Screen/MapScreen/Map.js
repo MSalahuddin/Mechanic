@@ -165,9 +165,11 @@ class MapScreen extends Component{
     }
 
     foregroundNotificationListner(){
-        this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
+        this.notificationListener = firebase.notifications().onNotification(async (notification: Notification) => {
             const jobData = notification._data;
             const user = this.props.user;
+            const userLat = user.latitude ;
+            const userLang = user.longitude ;
             const destinationLogitude = parseFloat(jobData.longitude);
             const destinationLatitude = parseFloat(jobData.latitude);
             const origin = {latitude: 24.87217, longitude: 67.3529129};
@@ -179,8 +181,20 @@ class MapScreen extends Component{
                 phoneNo: jobData.phoneNo,
                 profilePicture: jobData.profilePicture
             }
+            let res = await CalDistance(userLang, userLat, destinationLogitude, destinationLatitude);
+            let calDist = res.route.distance;
+            let calDistTime = res.route.formattedTime;  
+            console.log(jobData.longitude,'//////////////')
+            console.log(jobData.latitude,'laiiiiiiiiiiii')
+            console.log(this.props.user,'userrrrrrrrrrrrrrrrrrrr')
 
-            notification._data && this.setState({jobNotif: obj, notifOpen: true, distOrigin: origin, distDestination: destination},()=>{
+            notification._data && this.setState({
+                                        jobNotif: obj, 
+                                        notifOpen: true, 
+                                        distOrigin: origin, 
+                                        distDestination: destination,
+                                        calDist, 
+                                        calDistTime,},()=>{
                 this.setUserView()
             })
         });
@@ -249,6 +263,7 @@ class MapScreen extends Component{
         let res = await CalDistance(mecLang, machLat, userLang, userLat);
         let calDist = res.route.distance;
         let calDistTime = res.route.formattedTime;
+        
         this.setState({toggleInfo: true});
         this.setState({mechanicDetails: marker, calDist, calDistTime, isModalVisible: true})
     }
@@ -382,12 +397,12 @@ class MapScreen extends Component{
                                         height: height * 0.05,
                                         marginTop: height * 0.03,
                                         alignItems: 'center',
-                                        justifyContent: 'center',
+                                        justifyContent: 'space-between',
                                         flexDirection: 'row'}}
                         >
                             <Text numberOfLines = {1}
-                                style = {{color: '#ff8c00', fontSize: 17, width: width * 0.63}}>Destination distance time:</Text>
-                            <Text style = {{color: '#ff8c00', fontSize: 17}}>10 Min</Text>
+                                style = {{color: '#ff8c00', fontSize: 16, paddingLeft: width * 0.02 }}>Destination distance time:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 16, }}>{this.state.calDistTime} Min</Text>
                         </View>
 
                         <View style = {{
@@ -397,8 +412,8 @@ class MapScreen extends Component{
                                         justifyContent: 'center',
                                         flexDirection: 'row'}}
                         >
-                            <Text style = {{color: '#ff8c00', fontSize: 17, width: width * 0.6}}>Destination distance:</Text>
-                            <Text style = {{color: '#ff8c00', fontSize: 17}}>{parseFloat(this.state.distanceTravelled).toFixed(2)} km</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 16, width: width * 0.6}}>Destination distance:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 16}}>{parseFloat(this.state.calDist).toFixed(2)} km</Text>
                         </View>
 
                         <View style = {{
@@ -408,8 +423,8 @@ class MapScreen extends Component{
                                         justifyContent: 'center',
                                         flexDirection: 'row'}}
                         >
-                            <Text style = {{color: '#ff8c00', fontSize: 17, width: width * 0.6}}>Phone No:</Text>
-                            <Text style = {{color: '#ff8c00', fontSize: 17}}>{jobNotif.phoneNo}</Text>
+                            <Text style = {{width: width * 0.27, color: '#ff8c00', fontSize: 16}}>Phone No:</Text>
+                            <Text style = {{width: width * 0.5, textAlign: 'right', color: '#ff8c00', fontSize: 16}}>{jobNotif.phoneNo}</Text>
                         </View>
 
                         <View style = {{
@@ -419,8 +434,8 @@ class MapScreen extends Component{
                                         justifyContent: 'center',
                                         flexDirection: 'row'}}
                         >
-                            <Text style = {{color: '#ff8c00', fontSize: 17, width: width * 0.6}}>Vehicle Type:</Text>
-                            <Text style = {{color: '#ff8c00', fontSize: 17}}>{jobNotif.phoneNo}</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 16, width: width * 0.52}}>Vehicle Type:</Text>
+                            <Text style = {{color: '#ff8c00', fontSize: 16, width: width * 0.25, textAlign: 'right'}}>Car</Text>
                         </View>
 
                         <View style = {{width: width,
@@ -730,6 +745,7 @@ class MapScreen extends Component{
                         <ActivityIndicator size="large" color="#0000ff" />
                     </View>
                 }
+                {/*this.state.jobAccepted ? this.jobMapView() : this.mapView()*/}
                 </View>
                 {/*true ? this.setUserView() : this.state.toggleInfo ? this.mechanicDetailsView() : null*/}
                 {this.state.notifOpen ? this.setUserView() : this.state.toggleInfo ? this.mechanicDetailsView() : null}
