@@ -5,7 +5,7 @@ import {
     View,
     Image,
     Alert,
-    Platform, Dimensions, ActivityIndicator, TouchableOpacity,AsyncStorage,ToastAndroid
+    Platform, Dimensions, ActivityIndicator, TouchableOpacity,AsyncStorage,ToastAndroid, BackHandler
 } from 'react-native';
 import {connect} from "react-redux";
 import MapView, { Polyline, Marker, AnimatedRegion } from 'react-native-maps';
@@ -76,12 +76,19 @@ class MapScreen extends Component{
             this.getMechanicAndUser();
         },100000);
         this.setAsyncData();
+        this.backButtonHandler()
     }
 
     componentDidMount() {
         this.watchPosition();
         this.onNotificationOpen();
         this.foregroundNotificationListner();
+    }
+
+    backButtonHandler = () => {
+        BackHandler.addEventListener('hardwareBackPress', function () {
+            return true
+          })
     }
 
     async setAsyncData(){
@@ -172,7 +179,9 @@ class MapScreen extends Component{
             const userLang = user.longitude ;
             const destinationLogitude = parseFloat(jobData.longitude);
             const destinationLatitude = parseFloat(jobData.latitude);
-            const origin = {latitude: 24.87217, longitude: 67.3529129};
+            console.log(jobData.longitude,'/////////////////')
+            console.log(user.latitude,'userrrrrrrrrrrrrrrrrrrrraaaaaaaaaaaa')
+            const origin = {latitude: userLat, longitude: userLang};
             const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
             const obj = {
                 coordinates: {latitude: destinationLatitude , longitude: destinationLogitude},
@@ -184,9 +193,6 @@ class MapScreen extends Component{
             let res = await CalDistance(userLang, userLat, destinationLogitude, destinationLatitude);
             let calDist = res.route.distance;
             let calDistTime = res.route.formattedTime;  
-            console.log(jobData.longitude,'//////////////')
-            console.log(jobData.latitude,'laiiiiiiiiiiii')
-            console.log(this.props.user,'userrrrrrrrrrrrrrrrrrrr')
 
             notification._data && this.setState({
                                         jobNotif: obj, 
@@ -207,10 +213,12 @@ class MapScreen extends Component{
             const notification: Notification = notificationOpen.notification;
             const jobData = notification._data;
             const user = this.props.user;
+            const userLat = user.latitude ;
+            const userLang = user.longitude ;
             const destinationLogitude = parseFloat(jobData.longitude);
             const destinationLatitude = parseFloat(jobData.latitude);
 
-            const origin = {latitude: 24.87217, longitude: 67.3529129};
+            const origin = {latitude: userLat, longitude: userLang};
             const destination = {latitude: destinationLatitude, longitude: destinationLogitude};
             const obj = {
                 coordinates: {latitude: destinationLatitude , longitude: destinationLogitude},
@@ -373,7 +381,9 @@ class MapScreen extends Component{
         );
     }
 
-
+    redirectMap = () => {
+        this.setState({jobAccepted: false})
+    }
     setUserView(){
         const {jobNotif, notifOpen} = this.state;
         return(
@@ -718,11 +728,11 @@ class MapScreen extends Component{
                     }
                 </MapView>
                 { user.isMechanic ?
-                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRScannerScreen", {userId: this.state.userId, jobStatusId: this.state.jobStatusId, jobId: this.state.jobId, screen: "QRScannerScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
+                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRScannerScreen", {redirectMap: this.redirectMap ,userId: this.state.userId, jobStatusId: this.state.jobStatusId, jobId: this.state.jobId, screen: "QRScannerScreen"})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
                         <Text style = {{fontSize: 17, color: 'white'}}>Complete Job</Text>
                     </TouchableOpacity>
                     :
-                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {jobStatusId: jobStatusId, jobId: jobId, screen: "QRCodeScreen", mechanicDetails: mechanicDetails})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
+                    <TouchableOpacity onPress = {() => {this.props.navigation.navigate("QRCodeScreen", {redirectMap: this.redirectMap, jobStatusId: jobStatusId, jobId: jobId, screen: "QRCodeScreen", mechanicDetails: mechanicDetails})}} style = {{width: width * 0.7, height: height * 0.08, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: 'orange', top: height * 0.78, left: width * 0.15}}>
                         <Text style = {{fontSize: 17, color: 'white'}}>Job Done</Text>
                     </TouchableOpacity>
                 }

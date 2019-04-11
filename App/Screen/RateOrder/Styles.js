@@ -12,7 +12,7 @@ const Styles = {
         height: height* 0.1,
         alignItems:'center',
         justifyContent:'center',
-        backgroundColor: 'orange'
+        backgroundColor: '#ff8c00'
     },
     headerText:{
         fontSize:18,

@@ -23,17 +23,21 @@ class QRCodeScreen extends Component{
                 jobStatusId: this.props.navigation.getParam('jobStatusId') ,
                 userId: this.props.user.id
             },
-            mechanicDetails: this.props.navigation.getParam('mechanicDetails')
+            mechanicDetails: this.props.navigation.getParam('mechanicDetails'), 
+            redirectMap: this.props.navigation.getParam('redirectMap')
         }
 
     }
 
     componentWillMount(){
         this.JobReqResponse();
+       
     }
 
+    
+
     JobReqResponse = () => {
-        const {jobData,jobId, userId, statusId, mechanicDetails} = this.state;
+        const {jobData,jobId, userId, statusId, mechanicDetails, redirectMap} = this.state;
 
         db.collection('users').doc(jobData.userId).collection('pushReq').doc(jobData.jobId).collection('jobStatus').doc(jobData.jobStatusId)
             .onSnapshot(async (doc) => {
@@ -41,7 +45,7 @@ class QRCodeScreen extends Component{
                     this.setState({jobDone: true});
                     this.showToast('Thank You for using our service please rate our service');
                     setTimeout(() => {
-                        this.props.navigation.navigate("RateOrderScreen", {mechanicDetails: mechanicDetails})
+                        this.props.navigation.navigate("RateOrderScreen", {mechanicDetails: mechanicDetails, redirectMap: redirectMap})
                     },1500)
                 }
             });
@@ -57,6 +61,7 @@ class QRCodeScreen extends Component{
 
     render(){
         const {jobData, jobDone, mechanicDetails} = this.state;
+        
         return(
             <View>
                 <View style={Styles.header}>

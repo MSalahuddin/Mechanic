@@ -1,5 +1,5 @@
 import { createStackNavigator, DrawerNavigator } from 'react-navigation';
-import {View, Text, Dimensions, Image, TouchableOpacity, TextInput,ScrollView, StyleSheet,AsyncStorage} from 'react-native'
+import {View, Text, Dimensions, ToastAndroid, Image, TouchableOpacity, TextInput,ScrollView, StyleSheet,AsyncStorage} from 'react-native'
 import React, { Component } from 'react';
 import MapScreen from './../Screen/MapScreen/Map'
 import LoginScreen from './../Screen/Login/Login'
@@ -33,12 +33,17 @@ class DrawerDisplay extends Component{
         let id = user.id;
         let res = await signOut(id);
 
-        console.log(res,'ppppppppppppppppppp');
         await AsyncStorage.setItem('user', '');
         //firebase.auth().signOut();
         this.props.navigation.navigate("LoginScreen", {screen: "LoginScreen"})
     }
 
+    showToast = (message) =>{
+        ToastAndroid.show(
+            message,
+            ToastAndroid.SHORT
+        );
+    }
 
     render(){
         return(
@@ -92,6 +97,30 @@ class DrawerDisplay extends Component{
                         </View>
                     </View>
                 </TouchableOpacity>}
+                <TouchableOpacity onPress={()=>{this.showToast("Comming Soon")}}>
+                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
+                        <View style={{flex: 1, flexDirection: 'row'}}>
+                            <View style={{width: width*0.15,alignItems:'center',justifyContent:'center'}}>
+                                <Image source={require('../Images/aboutUs.png')} style={{width:25,height:25}}/>
+                            </View>
+                            <View style={{width: width*0.5,alignItems:'center',justifyContent:'center'}}>
+                                <Text style={{fontSize:15,fontFamily: 'gt-walsheim-regular', color: 'white'}}>About Us</Text>
+                            </View>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={()=>{this.showToast("Comming Soon")}}>
+                    <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
+                        <View style={{flex: 1, flexDirection: 'row'}}>
+                            <View style={{width: width*0.15,alignItems:'center',justifyContent:'center'}}>
+                                <Image source={require('../Images/contract.png')} style={{width:25,height:25}}/>
+                            </View>
+                            <View style={{width: width*0.5,alignItems:'center',justifyContent:'center'}}>
+                                <Text style={{fontSize:15,fontFamily: 'gt-walsheim-regular', color: 'white'}}>Privacy Policy</Text>
+                            </View>
+                        </View>
+                    </View>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={()=>{this.signOut()}}>
                     <View style={{height: height*0.1,borderWidth:0.5,borderBottomColor:'white',borderTopColor:'transparent',borderLeftColor:'transparent',borderRightColor:'transparent'}}>
                         <View style={{flex: 1, flexDirection: 'row'}}>
@@ -104,6 +133,7 @@ class DrawerDisplay extends Component{
                         </View>
                     </View>
                 </TouchableOpacity>
+                
             </View>
         )
     }
@@ -150,7 +180,7 @@ const Route = createStackNavigator({
     QRCodeScreen: {screen: QRCodeScreen},
     QRScannerScreen: {screen: QRScannerScreen},
     RateOrderScreen: {screen: RateOrderScreen},
-    Empty: {screen: Empty}
+    Empty: {screen: Empty},
 
 
 }, {

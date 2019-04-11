@@ -184,7 +184,6 @@ class LoginScreen extends Component{
 
     onChangePhoneNo = (text) => {
         const {phoneNo} = this.state;
-        console.log(phoneNo.length,'kkkkkkkkkkkkkkkkkkkkkkkjjjjjjjjjjjjj')
         if(phoneNo.length < 13){
             this.setState({ phoneNo: text})
         }
@@ -205,8 +204,8 @@ class LoginScreen extends Component{
                     this.renderVerificationCode()
                 :
                 <View>
-                    <View style={{width:width,height:height*0.2,alignItems:'center',justifyContent:'flex-end'}}>
-                        <Text style={{fontWeight:'bold',fontSize:24,color:'white'}}>AutoResque</Text>
+                    <View style={{width:width,height:height*0.35,alignItems:'center',justifyContent:'flex-end', marginTop: height * 0.05}}>
+                        <Image style = {{width: width * 0.6, height: height * 0.34, }} source = {require('../../Images/logo.png')}/>
                     </View>
 
                           <PhoneInput

@@ -4,11 +4,19 @@ import MapScreen from "../MapScreen/Map";
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import {onLogin} from '../../redux/auth/action'
+import firebase from 'react-native-firebase';
 
+const db = firebase.firestore();
 export default class Empty extends Component {
 
     componentWillMount(){
-        this.setAsyncData();
+        const mechanicId = "JDquVawIckUaxAZNLhF6I5PXDMl2"
+        db.collection('users').doc(mechanicId).update(
+            {
+                reviews:[{comment:"helloooo"}]
+            }
+        )
+        //this.setAsyncData();
     }
 
     async setAsyncData(){

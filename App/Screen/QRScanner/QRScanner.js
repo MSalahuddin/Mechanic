@@ -25,6 +25,27 @@ class QRScannerScreen extends Component{
         }
     }
 
+    showToast = (message) =>{
+        ToastAndroid.show(
+            message,
+            ToastAndroid.SHORT
+        );
+    }
+
+    redirectToMap = () => {
+        const redirectMapFunc = this.props.navigation.getParam('redirectMap')
+        redirectMapFunc();
+        this.props.navigation.navigate("MapScreen", {screen: "MapScreen"})
+    }
+
+    jobCompleted = () => {
+        Alert.alert('',
+            'Your Job is Completed Successfully', 
+            [
+            {text: 'OK', onPress: () => this.redirectToMap()}]
+            );
+    }
+    
     qrScanner = (data) =>{
         const {jobData} = this.state;
         let qrData = JSON.parse(data.data);
@@ -32,7 +53,7 @@ class QRScannerScreen extends Component{
             db.collection('users').doc(qrData.userId).collection('pushReq').doc(qrData.jobId).collection('jobStatus').doc(qrData.jobStatusId).update({
                 jobStatus: "Completed"
             }).then((res) => {
-                Alert.alert('','Your Job is Completed Successfully');
+                this.jobCompleted()
                 console.log(res, 'response')
             }).catch((err) => {
                 Alert.alert('','Something goes wrong');

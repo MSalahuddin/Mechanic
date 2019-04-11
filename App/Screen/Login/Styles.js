@@ -31,7 +31,7 @@ const Styles = {
         width: width * 0.8,
         borderColor: '#ff8c00',
         borderWidth: 2,
-        marginTop: height * 0.2,
+        marginTop: height * 0.05,
         marginLeft: height* 0.02,
         backgroundColor: 'white',
         marginLeft: width * 0.1
@@ -47,7 +47,7 @@ const Styles = {
         borderColor: 'white',
         borderWidth: 1,
         marginLeft: width * 0.1,
-        marginTop: height * 0.2,
+        marginTop: height * 0.14,
         elevation: 4
     },
     codeInput: {
