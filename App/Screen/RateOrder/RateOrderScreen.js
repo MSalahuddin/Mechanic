@@ -58,7 +58,7 @@ class RateOrderScreen extends Component{
         const userImage = user.profilePicture ? user.profilePicture : undefined
         db.collection('users').doc(mechanicDetails.id).get().then(snapshot => {
             console.log(snapshot.data().reviews,'///////////////mechanicdata')
-            const reviews = snapshot.data().reviews && snapshot.data().reviews;
+            let reviews = snapshot.data().reviews ? snapshot.data().reviews: []
             reviews.push(
                 {comment: reviewComment,
                  firstname: user.firstName,
